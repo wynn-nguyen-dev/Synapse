@@ -37,12 +37,12 @@ interface NotesViewPageProps {
 export default function NotesViewPage({ viewMode }: NotesViewPageProps) {
   const { selection, infinite, actions, config, status, state, data } = useNotesView(viewMode);
 
-  const { isBulkActive, sort } = state;
+  const { isBulkActive, reorderable, sort } = state;
   const { notes } = data;
   const { isLoading } = status;
   const { toggleSelectRange, clearSelection, toggleSelect, selectedIds } = selection;
   const { emptyVariant, description, title } = config;
-  const { executeEmptyTrash, executeBulkAction, navigateToCreate, changeSort } = actions;
+  const { executeEmptyTrash, executeBulkAction, openQuickCapture, changeSort, reorder } = actions;
   const { isFetchingNextPage, fetchNextPage, hasNextPage } = infinite;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -123,15 +123,17 @@ export default function NotesViewPage({ viewMode }: NotesViewPageProps) {
             isLoading={isLoading}
             notes={notes}
             emptyVariant={emptyVariant}
+            onReorder={reorderable ? reorder : undefined}
             onCreateClick={(e) => {
               e.preventDefault();
-              navigateToCreate();
+              openQuickCapture();
             }}
             renderItem={(note) => (
               <NoteCard
                 note={note}
                 viewMode={viewMode}
                 isSelected={selectedIds.has(note.id)}
+                reorderable={reorderable}
                 onToggleSelect={toggleSelect}
                 onSelectRange={(id) =>
                   toggleSelectRange(
@@ -162,7 +164,7 @@ export default function NotesViewPage({ viewMode }: NotesViewPageProps) {
       </div>
 
       <Button
-        onClick={navigateToCreate}
+        onClick={openQuickCapture}
         className={cn(
           'fixed bottom-6 right-6 z-40 size-12 rounded-full shadow-lg md:hidden cursor-pointer transition-all duration-300',
           isBulkActive && 'scale-0 pointer-events-none opacity-0',

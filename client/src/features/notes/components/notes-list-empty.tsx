@@ -11,8 +11,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+import { Button } from '@/components/ui/button';
 
-import { ArchiveIcon, FileTextIcon, StarIcon, Trash2Icon } from 'lucide-react';
+import { ArchiveIcon, FileTextIcon, SparklesIcon, StarIcon, Trash2Icon } from 'lucide-react';
+
+import { openAskNotes } from '@/features/notes/constants';
 
 interface NotesEmptyStateProps {
   variant: NotesEmptyVariant;
@@ -60,6 +63,15 @@ export default function NotesListEmpty({ children, variant }: NotesEmptyStatePro
       </EmptyHeader>
 
       {children && variant !== 'no-results' && <EmptyContent>{children}</EmptyContent>}
+
+      {variant === 'no-results' && (
+        <EmptyContent>
+          <Button type="button" variant="outline" size="sm" onClick={() => openAskNotes()}>
+            <SparklesIcon data-icon="inline-start" />
+            {m.notes_ask_title()}
+          </Button>
+        </EmptyContent>
+      )}
     </Empty>
   );
 }

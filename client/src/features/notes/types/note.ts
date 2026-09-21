@@ -1,4 +1,5 @@
 export interface Note {
+  tags?: Array<string>;
   favorite: boolean;
   archived: boolean;
   createdAt: string;

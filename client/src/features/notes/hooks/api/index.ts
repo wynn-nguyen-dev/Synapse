@@ -1,9 +1,16 @@
 export { useDeleteNote } from './use-delete-note';
+export { useAskNotes } from './use-ask-notes';
+export { useBacklinks } from './use-backlinks';
+export { useDismissEnrichKind } from './use-dismiss-enrich-kind';
 export { useEmptyTrash } from './use-empty-trash';
+export { useGenerateNoteEnrich } from './use-generate-note-enrich';
 export { useGenerateNoteTitle } from './use-generate-note-title';
 export { useGetNote } from './use-get-note';
 export { useGetNotes } from './use-get-notes';
 export { useInfiniteNotes } from './use-infinite-notes';
 export { useNotesBulkAction } from './use-notes-bulk-action';
+export { usePatchNoteTags } from './use-patch-note-tags';
+export { useRelatedNotes } from './use-related-notes';
+export { useReorderNotes } from './use-reorder-notes';
 export { useRestoreNote } from './use-restore-note';
 export { useTrashNote } from './use-trash-note';

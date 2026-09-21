@@ -2,6 +2,7 @@ package com.synapse.notes.note.dto.response;
 
 import com.synapse.notes.note.model.Note;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record NoteResponse(
@@ -15,9 +16,17 @@ public record NoteResponse(
     boolean trashed,
     Instant trashedAt,
     Instant createdAt,
-    Instant updatedAt) {
+    Instant updatedAt,
+    List<String> tags,
+    Integer sortOrder,
+    List<AttachmentMeta> attachments) {
 
   public static NoteResponse from(Note note) {
+    List<String> tags = note.getTags() == null ? List.of() : List.copyOf(note.getTags());
+    List<AttachmentMeta> attachments =
+        note.getAttachments() == null
+            ? List.of()
+            : note.getAttachments().stream().map(AttachmentMeta::from).toList();
     return new NoteResponse(
         note.getId(),
         note.getUserId(),
@@ -29,6 +38,9 @@ public record NoteResponse(
         note.isTrashed(),
         note.getTrashedAt(),
         note.getCreatedAt(),
-        note.getUpdatedAt());
+        note.getUpdatedAt(),
+        tags,
+        note.getSortOrder(),
+        attachments);
   }
 }

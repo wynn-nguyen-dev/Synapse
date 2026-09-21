@@ -24,7 +24,10 @@ public record NoteQueryParams(
     archived = (archived == null) ? false : archived;
     trashed = (trashed == null) ? false : trashed;
 
-    sort = (sort == null || sort.isEmpty()) ? List.of("pinned,desc", "updatedAt,desc") : sort;
+    sort =
+        (sort == null || sort.isEmpty())
+            ? List.of("pinned,desc", "sortOrder,asc", "updatedAt,desc")
+            : sort;
   }
 
   public Pageable toPageable(Set<String> allowedSortFields) {

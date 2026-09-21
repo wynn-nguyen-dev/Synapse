@@ -29,6 +29,7 @@ import {
   HelpCircleIcon,
   BarChart2Icon,
   ArrowRightIcon,
+  SparklesIcon,
 } from 'lucide-react';
 
 import {
@@ -37,9 +38,14 @@ import {
   CommandPaletteSearchResults,
   CommandPaletteFooter,
 } from '@/features/command-palette/components';
+import {
+  NOTE_CONTENT_MAX_LENGTH,
+  openAskNotes,
+  openQuickCapture,
+  useGetNotes,
+  useNoteCreatePrefillStore,
+} from '@/features/notes';
 import { useGoToCompanion } from '@/features/companion/hooks/use-go-to-companion';
-import { useGetNotes, useNoteCreatePrefillStore } from '@/features/notes';
-import { NOTE_CONTENT_MAX_LENGTH } from '@/features/notes/constants';
 import { getMarkdownReadTimeSync } from '@/features/notes/service';
 
 export default function CommandPalette() {
@@ -112,7 +118,7 @@ export default function CommandPalette() {
     { allowWhenTyping: true },
   );
 
-  const contentPart = search.replace(/^\/(create|note)\s*/i, '').trim();
+  const contentPart = search.replace(/^\/(create|note|ask)\s*/i, '').trim();
 
   // 1. Slash Commands (/help, /theme, /stats, /notes, /create)
   const slashCommands = useMemo<Array<GroupedCommandItem>>(
@@ -207,7 +213,7 @@ export default function CommandPalette() {
               .getState()
               .set(contentPart.trim().slice(0, NOTE_CONTENT_MAX_LENGTH));
           }
-          void navigate({ to: '/notes/create' });
+          openQuickCapture();
         },
         title: contentPart
           ? m.command_palette_create_title_with_title({ content: contentPart })
@@ -221,8 +227,20 @@ export default function CommandPalette() {
         icon: PlusIcon,
         group: 'quick',
       },
+      {
+        action: () => {
+          setIsOpen(false);
+          openAskNotes(contentPart || undefined);
+        },
+        title: '/ask',
+        subtitle: m.notes_ask_title(),
+        command: '/ask',
+        id: 'cmd_ask',
+        icon: SparklesIcon,
+        group: 'quick',
+      },
     ],
-    [theme, notes, contentPart, navigate, toggleTheme],
+    [theme, notes, contentPart, toggleTheme],
   );
 
   // 2. Static Commands

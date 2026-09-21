@@ -42,11 +42,14 @@ const EDITOR_SHORTCUT_IDS = [
   'editor-blockquote',
   'editor-link',
   'editor-highlight',
+  'enrich-note',
 ] as const satisfies Array<ShortcutId>;
 
 type EditorShortcutId = (typeof EDITOR_SHORTCUT_IDS)[number];
 
 const HIGHLIGHT_MARK_ID = 'synapse-highlight';
+
+export const NOTE_ENRICH_REQUEST_EVENT = 'request-note-enrich';
 
 function formatHighlightBlock(editor: Parameters<typeof formatHeadingBlock>[0]) {
   editor.update(() => {
@@ -141,6 +144,9 @@ export default function KeyboardShortcutsPlugin() {
           break;
         case 'editor-highlight':
           formatHighlightBlock(editor);
+          break;
+        case 'enrich-note':
+          window.dispatchEvent(new CustomEvent(NOTE_ENRICH_REQUEST_EVENT));
           break;
       }
     };

@@ -1,9 +1,11 @@
+import { useCallback, useEffect } from 'react';
 import { Controller } from 'react-hook-form';
-import { useEffect } from 'react';
 
-import { getRouteApi, useParams } from '@tanstack/react-router';
+import { getRouteApi, useNavigate, useParams } from '@tanstack/react-router';
 
 import { toast } from 'sonner';
+
+import { useShortcut } from '@/hooks/use-shortcut';
 
 import {
   buildNoteChatAttachment,
@@ -13,8 +15,8 @@ import { useCompanionContextStore } from '@/store/companion-context-store';
 
 import { m } from '@/paraglide/messages';
 
+import { KeyCombo, MarkdownRenderer } from '@/components/shared';
 import { LexicalEditor } from '@/components/shared/editor';
-import { MarkdownRenderer } from '@/components/shared';
 
 import {
   DropdownMenu,
@@ -43,7 +45,13 @@ import {
   XCircleIcon,
 } from 'lucide-react';
 
+import EnrichSuggestionBar from '@/features/notes/components/enrich-suggestion-bar';
 import { getMarkdownReadTimeSync, exportMarkdown } from '@/features/notes/service';
+import RelatedNotesPanel from '@/features/notes/components/related-notes-panel';
+import BacklinksSection from '@/features/notes/components/backlinks-section';
+import NoteTagEditor from '@/features/notes/components/note-tag-editor';
+import { useNoteTags } from '@/features/notes/hooks/use-note-tags';
+import { getNotesClient } from '@/features/notes/api/notes.http';
 import { useGoToCompanion } from '@/features/companion/hooks';
 import { useNoteDetails } from '@/features/notes/hooks';
 
@@ -70,6 +78,9 @@ export function NoteDetailPage() {
   const { isRestoring, isDeleting, isTrashing, isUpdating } = status;
 
   const { noteId } = useParams({ from: '/_app/notes/$noteId' });
+  const navigate = useNavigate();
+  const { state: tagState, actions: tagActions } = useNoteTags(noteId, note.tags ?? []);
+  const { combos: enrichCombos } = useShortcut('enrich-note');
   const setActiveDocument = useCompanionContextStore((state) => state.setActiveDocument);
   const addNoteAttachment = useChatNoteAttachmentStore((state) => state.add);
   const goToCompanion = useGoToCompanion();
@@ -88,6 +99,34 @@ export function NoteDetailPage() {
     }
     goToCompanion();
   };
+
+  const resolveWikilink = useCallback(
+    async (title: string) => {
+      try {
+        const page = await getNotesClient({
+          query: { q: title, pageSize: 1, page: 1, sort: ['updatedAt,desc'] },
+        });
+        const [match] = page.items;
+        if (!match) {
+          toast.error(m.notes_wikilink_not_found({ title }));
+          return;
+        }
+        void navigate({ to: '/notes/$noteId', params: { noteId: match.id } });
+      } catch {
+        toast.error(m.notes_ask_failed(), {
+          description: m.common_error_connection(),
+        });
+      }
+    },
+    [navigate],
+  );
+
+  const handleWikilinkClick = useCallback(
+    (title: string) => {
+      void resolveWikilink(title);
+    },
+    [resolveWikilink],
+  );
 
   const isTrashed = note.trashed;
   const isBusy = isUpdating || isDeleting || isTrashing || isRestoring;
@@ -233,6 +272,40 @@ export function NoteDetailPage() {
           <div className="flex flex-1 overflow-hidden">
             <div className="flex-1 overflow-y-auto">
               <div className="mx-auto max-w-5xl px-6 py-8 md:py-12 space-y-4">
+                {!isTrashed && (
+                  <EnrichSuggestionBar
+                    noteId={noteId}
+                    content={watchedContent}
+                    isTrashed={isTrashed}
+                    onTagsChange={tagActions.setTags}
+                    onApplyTitle={(title) =>
+                      form.setValue('title', title, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    onAppendContent={(block) =>
+                      form.setValue('content', `${watchedContent}\n\n${block}`, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  />
+                )}
+
+                {!isTrashed && (
+                  <NoteTagEditor
+                    key={noteId}
+                    noteId={noteId}
+                    tags={tagState.tags}
+                    onTagsChange={tagActions.setTags}
+                  />
+                )}
+
+                <RelatedNotesPanel noteId={noteId} />
+
+                <BacklinksSection noteId={noteId} />
+
                 <TabsContent value="edit" className="m-0 focus-visible:outline-none min-h-125">
                   <Controller
                     name="title"
@@ -260,6 +333,13 @@ export function NoteDetailPage() {
                       />
                     )}
                   />
+
+                  {!isTrashed && !watchedContent.trim() && (
+                    <p className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground/70">
+                      {m.notes_enrich_hint()}
+                      <KeyCombo combo={enrichCombos[0] ?? ''} />
+                    </p>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="preview" className="m-0 focus-visible:outline-none min-h-125">
@@ -271,6 +351,7 @@ export function NoteDetailPage() {
                     <MarkdownRenderer
                       className="h-full"
                       content={watchedContent || m.notes_page_empty_preview_fallback()}
+                      onWikilinkClick={handleWikilinkClick}
                     />
                   </div>
                 </TabsContent>

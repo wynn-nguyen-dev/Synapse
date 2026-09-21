@@ -3,8 +3,15 @@ package com.synapse.notes.note.event;
 import com.google.cloud.spring.pubsub.core.PubSubTemplate;
 import com.synapse.notes.config.PubSubConfiguration;
 import com.synapse.notes.note.model.Note;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
+import java.util.HexFormat;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -90,8 +97,13 @@ public class NoteEventPublisher {
       String content,
       boolean trashed,
       Instant createdAt,
-      Instant updatedAt) {
+      Instant updatedAt,
+      List<String> tags,
+      List<String> attachmentTexts,
+      String attachmentHash) {
     public static NoteEventPayload from(Note note) {
+      List<String> tags = note.getTags() == null ? List.of() : List.copyOf(note.getTags());
+      List<String> attachmentTexts = decodeAttachmentTexts(note);
       return new NoteEventPayload(
           note.getId(),
           note.getUserId(),
@@ -99,7 +111,44 @@ public class NoteEventPublisher {
           note.getContent(),
           note.isTrashed(),
           note.getCreatedAt(),
-          note.getUpdatedAt());
+          note.getUpdatedAt(),
+          tags,
+          attachmentTexts,
+          hashAttachmentTexts(attachmentTexts));
+    }
+
+    private static List<String> decodeAttachmentTexts(Note note) {
+      if (note.getAttachments() == null || note.getAttachments().isEmpty()) {
+        return List.of();
+      }
+      List<String> texts = new ArrayList<>();
+      for (var attachment : note.getAttachments()) {
+        try {
+          byte[] decoded = Base64.getDecoder().decode(attachment.getContentBase64());
+          texts.add(new String(decoded, StandardCharsets.UTF_8));
+        } catch (IllegalArgumentException e) {
+          log.warn(
+              "[PubSub] Skipping undecodable attachment [{}] of note [{}]",
+              attachment.getId(),
+              note.getId());
+        }
+      }
+      return texts;
+    }
+
+    private static String hashAttachmentTexts(List<String> texts) {
+      if (texts.isEmpty()) {
+        return null;
+      }
+      try {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        for (String text : texts) {
+          digest.update(text.getBytes(StandardCharsets.UTF_8));
+        }
+        return HexFormat.of().formatHex(digest.digest());
+      } catch (NoSuchAlgorithmException e) {
+        throw new IllegalStateException("SHA-256 unavailable", e);
+      }
     }
   }
 

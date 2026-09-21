@@ -7,10 +7,12 @@ import com.synapse.notes.note.dto.request.BulkActionRequest;
 import com.synapse.notes.note.dto.request.CreateNoteRequest;
 import com.synapse.notes.note.dto.request.NoteQueryParams;
 import com.synapse.notes.note.dto.request.PatchNoteRequest;
+import com.synapse.notes.note.dto.request.ReorderNotesRequest;
 import com.synapse.notes.note.dto.request.UpdateNoteRequest;
 import com.synapse.notes.note.dto.response.NoteResponse;
 import com.synapse.notes.note.service.NoteService;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -85,5 +87,17 @@ public class NoteController {
       @CurrentUserId String userId, @RequestBody @Valid BulkActionRequest req) {
     int affected = noteService.executeBulkAction(userId, req.ids(), req.action());
     return ApiResponse.success(affected);
+  }
+
+  @PatchMapping("/reorder")
+  public ApiResponse<Integer> reorderNotes(
+      @CurrentUserId String userId, @RequestBody @Valid ReorderNotesRequest req) {
+    return ApiResponse.success(noteService.reorderNotes(userId, req.noteIds()));
+  }
+
+  @GetMapping("/{id}/backlinks")
+  public ApiResponse<List<NoteResponse>> getBacklinks(
+      @CurrentUserId String userId, @PathVariable UUID id) {
+    return ApiResponse.success(noteService.getBacklinks(userId, id));
   }
 }

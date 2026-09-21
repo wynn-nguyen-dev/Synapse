@@ -4,9 +4,11 @@ import { noteEmbeddings, notes } from '@/database/schema';
 import { db } from '@/database';
 
 export type UpsertNoteParams = {
+  attachmentHash: string | null;
   createdAt: string | null;
   updatedAt: string | null;
   title: string | null;
+  tags: Array<string>;
   trashed: boolean;
   content: string;
   userId: string;
@@ -28,6 +30,8 @@ export async function getNotesByIds(noteIds: Array<string>) {
       trashed: notes.trashed,
       title: notes.title,
       id: notes.id,
+      tags: notes.tags,
+      attachmentHash: notes.attachmentHash,
     })
     .from(notes)
     .where(inArray(notes.id, noteIds));
@@ -47,6 +51,8 @@ export async function bulkUpsertNoteRecords(dataList: Array<UpsertNoteParams>) {
         userId: data.userId,
         title: data.title,
         id: data.id,
+        tags: data.tags,
+        attachmentHash: data.attachmentHash,
       })),
     )
     .onConflictDoUpdate({
@@ -56,6 +62,8 @@ export async function bulkUpsertNoteRecords(dataList: Array<UpsertNoteParams>) {
         content: sql`EXCLUDED.content`,
         trashed: sql`EXCLUDED.trashed`,
         title: sql`EXCLUDED.title`,
+        tags: sql`EXCLUDED.tags`,
+        attachmentHash: sql`EXCLUDED.attachment_hash`,
       },
       target: notes.id,
     });

@@ -22,7 +22,6 @@ import { Route as AppChatIndexRouteImport } from './routes/_app/chat/index'
 import { Route as AppChatConversationIdRouteImport } from './routes/_app/chat/$conversationId'
 import { Route as AppNotesNoteIdRouteImport } from './routes/_app/notes/$noteId'
 import { Route as AppNotesListRouteRouteImport } from './routes/_app/notes/_list/route'
-import { Route as AppNotesCreateRouteImport } from './routes/_app/notes/create'
 import { Route as AppNotesListIndexRouteImport } from './routes/_app/notes/_list/index'
 import { Route as AppNotesListArchiveRouteImport } from './routes/_app/notes/_list/archive'
 import { Route as AppNotesListFavoritesRouteImport } from './routes/_app/notes/_list/favorites'
@@ -90,11 +89,6 @@ const AppNotesListRouteRoute = AppNotesListRouteRouteImport.update({
   id: '/_list',
   getParentRoute: () => AppNotesRouteRoute,
 } as any)
-const AppNotesCreateRoute = AppNotesCreateRouteImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => AppNotesRouteRoute,
-} as any)
 const AppNotesListIndexRoute = AppNotesListIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -126,7 +120,6 @@ export interface FileRoutesByFullPath {
   '/register': typeof AuthRegisterRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/notes/$noteId': typeof AppNotesNoteIdRoute
-  '/notes/create': typeof AppNotesCreateRoute
   '/chat/': typeof AppChatIndexRoute
   '/notes/archive': typeof AppNotesListArchiveRoute
   '/notes/favorites': typeof AppNotesListFavoritesRoute
@@ -142,7 +135,6 @@ export interface FileRoutesByTo {
   '/register': typeof AuthRegisterRoute
   '/chat/$conversationId': typeof AppChatConversationIdRoute
   '/notes/$noteId': typeof AppNotesNoteIdRoute
-  '/notes/create': typeof AppNotesCreateRoute
   '/chat': typeof AppChatIndexRoute
   '/notes/archive': typeof AppNotesListArchiveRoute
   '/notes/favorites': typeof AppNotesListFavoritesRoute
@@ -162,7 +154,6 @@ export interface FileRoutesById {
   '/_app/notes/_list': typeof AppNotesListRouteRouteWithChildren
   '/_app/chat/$conversationId': typeof AppChatConversationIdRoute
   '/_app/notes/$noteId': typeof AppNotesNoteIdRoute
-  '/_app/notes/create': typeof AppNotesCreateRoute
   '/_app/chat/': typeof AppChatIndexRoute
   '/_app/notes/_list/archive': typeof AppNotesListArchiveRoute
   '/_app/notes/_list/favorites': typeof AppNotesListFavoritesRoute
@@ -181,7 +172,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/chat/$conversationId'
     | '/notes/$noteId'
-    | '/notes/create'
     | '/chat/'
     | '/notes/archive'
     | '/notes/favorites'
@@ -197,7 +187,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/chat/$conversationId'
     | '/notes/$noteId'
-    | '/notes/create'
     | '/chat'
     | '/notes/archive'
     | '/notes/favorites'
@@ -216,7 +205,6 @@ export interface FileRouteTypes {
     | '/_app/notes/_list'
     | '/_app/chat/$conversationId'
     | '/_app/notes/$noteId'
-    | '/_app/notes/create'
     | '/_app/chat/'
     | '/_app/notes/_list/archive'
     | '/_app/notes/_list/favorites'
@@ -323,13 +311,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotesListRouteRouteImport
       parentRoute: typeof AppNotesRouteRoute
     }
-    '/_app/notes/create': {
-      id: '/_app/notes/create'
-      path: '/create'
-      fullPath: '/notes/create'
-      preLoaderRoute: typeof AppNotesCreateRouteImport
-      parentRoute: typeof AppNotesRouteRoute
-    }
     '/_app/notes/_list/': {
       id: '/_app/notes/_list/'
       path: '/'
@@ -395,13 +376,11 @@ const AppNotesListRouteRouteWithChildren =
 interface AppNotesRouteRouteChildren {
   AppNotesListRouteRoute: typeof AppNotesListRouteRouteWithChildren
   AppNotesNoteIdRoute: typeof AppNotesNoteIdRoute
-  AppNotesCreateRoute: typeof AppNotesCreateRoute
 }
 
 const AppNotesRouteRouteChildren: AppNotesRouteRouteChildren = {
   AppNotesListRouteRoute: AppNotesListRouteRouteWithChildren,
   AppNotesNoteIdRoute: AppNotesNoteIdRoute,
-  AppNotesCreateRoute: AppNotesCreateRoute,
 }
 
 const AppNotesRouteRouteWithChildren = AppNotesRouteRoute._addFileChildren(

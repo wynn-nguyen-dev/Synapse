@@ -1,26 +1,34 @@
-import type { CreateNoteRequest, CreateNoteResponse } from '@/features/notes/api/notes.http';
 import type { NoteFormInput, NoteInputPayload } from '@/features/notes/schemas';
+import type { CreateNoteResponse } from '@/features/notes/api/notes.http';
 
 import { useForm, useWatch } from 'react-hook-form';
-import { useEffect } from 'react';
+import { useState } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
+import { nanoid } from 'nanoid';
 import { toast } from 'sonner';
-
-import { useFormSaveShortcut } from '@/hooks/use-form-save-shortcut';
 
 import { m } from '@/paraglide/messages';
 
-import { useNoteCreatePrefillStore } from '@/features/notes/store';
-import { createNoteClient } from '@/features/notes/api/notes.http';
-import { useGenerateNoteTitle } from '@/features/notes/hooks/api';
+import { createAttachmentClient, createNoteClient } from '@/features/notes/api/notes.http';
+import { fileToBase64 } from '@/features/notes/attachments';
 import { noteInputSchema } from '@/features/notes/schemas';
 import { noteKeys } from '@/features/notes/api/notes.api';
 
-export function useNoteCreate() {
+interface UseNoteCreateOptions {
+  onCreated?: () => void;
+}
+
+export interface AttachedFile {
+  file: File;
+  id: string;
+}
+
+export function useNoteCreate(options: UseNoteCreateOptions = {}) {
+  const { onCreated } = options;
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -31,24 +39,9 @@ export function useNoteCreate() {
     },
   });
 
-  const {
-    formState: { isDirty },
-    handleSubmit,
-    setValue,
-    control,
-  } = form;
+  const { handleSubmit, control } = form;
 
-  const consumePrefill = useNoteCreatePrefillStore((state) => state.consume);
-
-  useEffect(() => {
-    const prefill = consumePrefill();
-    if (prefill) {
-      setValue('content', prefill, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    }
-  }, [consumePrefill, setValue]);
+  const [attachedFiles, setAttachedFiles] = useState<Array<AttachedFile>>([]);
 
   const [watchedContent] = useWatch({
     name: ['content'],
@@ -58,71 +51,82 @@ export function useNoteCreate() {
   const { isPending: isCreating, mutate: _createNote } = useMutation<
     CreateNoteResponse,
     Error,
-    CreateNoteRequest
+    { files: Array<AttachedFile>; body: NoteInputPayload }
   >({
-    onSuccess: ({ title, id }) => {
-      void queryClient.invalidateQueries({ queryKey: noteKeys.all });
+    onSuccess: ({ title, id }, variables) => {
+      const pendingFiles = variables.files;
+      setAttachedFiles([]);
 
-      toast.success(m.notes_page_toast_created(), {
-        description: m.notes_page_toast_created_desc({ title }),
-      });
+      const finish = () => {
+        void queryClient.invalidateQueries({ queryKey: noteKeys.all });
 
-      void navigate({ params: { noteId: id }, to: '/notes/$noteId', replace: true });
+        toast.success(m.notes_page_toast_created(), {
+          description: m.notes_page_toast_created_desc({ title }),
+        });
 
-      form.reset({ title: undefined, content: '' });
+        onCreated?.();
+
+        void navigate({ params: { noteId: id }, to: '/notes/$noteId', replace: true });
+      };
+
+      if (pendingFiles.length === 0) {
+        finish();
+        return;
+      }
+
+      void (async () => {
+        try {
+          await Promise.all(
+            pendingFiles.map(async ({ file }) => {
+              const contentBase64 = await fileToBase64(file);
+              await createAttachmentClient({
+                params: { id },
+                body: { filename: file.name, contentBase64 },
+              });
+            }),
+          );
+        } catch {
+          toast.error(m.notes_attachments_failed(), {
+            description: m.common_error_connection(),
+          });
+        }
+        finish();
+      })();
     },
     onError: () => {
       toast.error(m.notes_page_toast_create_failed(), {
         description: m.common_error_connection(),
       });
     },
-    mutationFn: createNoteClient,
+    mutationFn: ({ body }) => createNoteClient({ body }),
   });
-
-  const { isPending: isGeneratingTitle, mutate: _generateNoteTitle } = useGenerateNoteTitle();
 
   // 3. Handlers
   const createNote = (data: NoteInputPayload) => {
-    _createNote({ body: data });
+    _createNote({ body: data, files: attachedFiles });
   };
 
-  const generateNoteTitle = () => {
-    if (!watchedContent.trim() || isGeneratingTitle) return;
-
-    _generateNoteTitle(
-      { body: { content: watchedContent } },
-      {
-        onSuccess: ({ title }) => {
-          setValue('title', title, { shouldDirty: true });
-        },
-      },
-    );
+  const attachFiles = (files: Array<File>) => {
+    setAttachedFiles((prev) => [...prev, ...files.map((file) => ({ file, id: nanoid() }))]);
   };
 
-  const backToNotesPage = () => {
-    void navigate({ to: '/notes' });
+  const removeAttachedFile = (id: string) => {
+    setAttachedFiles((prev) => prev.filter((entry) => entry.id !== id));
   };
-
-  useFormSaveShortcut({
-    isSubmitting: isCreating,
-    onSubmit: createNote,
-    enabled: isDirty,
-    form,
-  });
 
   return {
     actions: {
       createNew: handleSubmit(createNote),
-      generateNoteTitle,
-      backToNotesPage,
       createNote,
+      attachFiles,
+      removeAttachedFile,
     },
     status: {
-      isGeneratingTitle,
       isCreating,
     },
     state: {
       watchedContent,
+      attachedFiles,
     },
     form,
   };

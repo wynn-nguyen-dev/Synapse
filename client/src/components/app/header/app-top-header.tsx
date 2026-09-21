@@ -1,5 +1,3 @@
-import { useNavigate } from '@tanstack/react-router';
-
 import LangEnIcon from '@iconify-react/circle-flags/lang-en';
 import LangViIcon from '@iconify-react/circle-flags/lang-vi';
 import { Fragment } from 'react/jsx-runtime';
@@ -44,6 +42,8 @@ import {
   MonitorIcon,
 } from 'lucide-react';
 
+import { openQuickCapture } from '@/features/notes';
+
 const locales = [
   {
     label: (
@@ -66,7 +66,6 @@ const locales = [
 ] as const;
 
 export default function AppTopHeader() {
-  const navigate = useNavigate();
   const { setTheme, theme } = useTheme();
   const { rightSidebar, layoutMode } = useSettingsStore();
   const [headerRef, headerWidth] = useElementWidth<HTMLElement>();
@@ -126,10 +125,7 @@ export default function AppTopHeader() {
           </TooltipProvider>
 
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem
-              onClick={() => void navigate({ to: '/notes/create' })}
-              className="cursor-pointer text-xs"
-            >
+            <DropdownMenuItem onClick={() => openQuickCapture()} className="cursor-pointer text-xs">
               <FileTextIcon className="size-4 mr-2" />
               {m.header_new_note()}
             </DropdownMenuItem>

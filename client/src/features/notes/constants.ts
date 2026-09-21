@@ -6,6 +6,23 @@ import { m } from '@/paraglide/messages';
 
 export const NOTE_CONTENT_MAX_LENGTH = 1500;
 
+export const ASK_NOTES_DEBOUNCE_MS = 300;
+export const RELATED_NOTES_LIMIT = 2;
+
+export const ASK_NOTES_OPEN_EVENT = 'open-ask-notes';
+
+export function openAskNotes(query?: string): void {
+  window.dispatchEvent(
+    new CustomEvent(ASK_NOTES_OPEN_EVENT, query === undefined ? undefined : { detail: { query } }),
+  );
+}
+
+export const QUICK_CAPTURE_OPEN_EVENT = 'open-quick-capture';
+
+export function openQuickCapture(): void {
+  window.dispatchEvent(new CustomEvent(QUICK_CAPTURE_OPEN_EVENT));
+}
+
 export const NOTE_BULK_ACTIONS = [
   'PIN',
   'UNPIN',

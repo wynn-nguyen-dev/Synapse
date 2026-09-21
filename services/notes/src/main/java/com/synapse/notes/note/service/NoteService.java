@@ -13,13 +13,18 @@ import com.synapse.notes.note.dto.response.NoteResponse;
 import com.synapse.notes.note.event.NoteCreatedEvent;
 import com.synapse.notes.note.event.NoteEventPublisher;
 import com.synapse.notes.note.model.Note;
+import com.synapse.notes.note.repository.NoteAttachmentRepository;
 import com.synapse.notes.note.repository.NoteRepository;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,9 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class NoteService {
   private static final Set<String> ALLOWED_SORT_FIELDS =
-      Set.of("createdAt", "updatedAt", "title", "pinned", "favorite", "trashedAt");
+      Set.of("createdAt", "updatedAt", "title", "pinned", "favorite", "trashedAt", "sortOrder");
+  private static final int BACKLINKS_LIMIT = 20;
 
   private final NoteRepository noteRepository;
+  private final NoteAttachmentRepository noteAttachmentRepository;
   private final NoteEventPublisher eventPublisher;
   private final NoteTitleClient titleClient;
   private final ApplicationEventPublisher applicationEventPublisher;
@@ -99,11 +106,54 @@ public class NoteService {
       note.setFavorite(req.favorite());
     }
 
-    if (wasTrashed != note.isTrashed()) {
+    if (req.tags() != null) {
+      note.replaceTags(req.tags());
+    }
+
+    if (wasTrashed != note.isTrashed() || req.tags() != null) {
       eventPublisher.publishUpdated(note);
     }
 
     return NoteResponse.from(note);
+  }
+
+  @Transactional
+  public int reorderNotes(String userId, List<UUID> noteIds) {
+    if (noteIds == null || noteIds.isEmpty()) {
+      return 0;
+    }
+
+    Map<UUID, Note> notesById = new HashMap<>();
+    for (Note note : noteRepository.findAllByIdInAndUserId(noteIds, userId)) {
+      notesById.put(note.getId(), note);
+    }
+
+    for (int index = 0; index < noteIds.size(); index++) {
+      Note note = notesById.get(noteIds.get(index));
+      if (note == null) {
+        throw new ApiException(ErrorCode.NOTE_NOT_FOUND, "Note not found");
+      }
+      note.setSortOrder(index);
+      note.setUpdatedAt(Instant.now());
+    }
+
+    return noteIds.size();
+  }
+
+  public List<NoteResponse> getBacklinks(String userId, UUID id) {
+    Note note = getNoteEntity(userId, id);
+    if (note.getTitle() == null || note.getTitle().isBlank()) {
+      return List.of();
+    }
+
+    String escapedTitle =
+        note.getTitle().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+
+    return noteRepository
+        .findBacklinks(userId, id, escapedTitle, PageRequest.of(0, BACKLINKS_LIMIT))
+        .stream()
+        .map(NoteResponse::from)
+        .toList();
   }
 
   @Transactional
@@ -120,6 +170,8 @@ public class NoteService {
     final var trashedIds = noteRepository.findTrashedIdsByUserId(userId);
 
     if (!trashedIds.isEmpty()) {
+      noteAttachmentRepository.deleteByNote_IdInAndUserId(trashedIds, userId);
+      noteRepository.deleteTagsByNoteIds(trashedIds);
       noteRepository.deleteAllTrashedByUserId(userId);
       eventPublisher.publishDeleted(trashedIds);
     }
@@ -160,6 +212,8 @@ public class NoteService {
       }
 
       case DELETE_PERMANENT -> {
+        noteAttachmentRepository.deleteByNote_IdInAndUserId(ids, userId);
+        noteRepository.deleteTagsByNoteIds(ids);
         int affected = noteRepository.bulkDeletePermanent(userId, ids);
         if (affected > 0) {
           eventPublisher.publishDeleted(ids);

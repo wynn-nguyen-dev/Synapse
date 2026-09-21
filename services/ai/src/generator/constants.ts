@@ -1,3 +1,11 @@
 export const MAX_TITLE_LENGTH = 200;
 export const MAX_OUTPUT_TOKENS_GENERATE_TITLE = 150;
 export const TEMPERATURE_GENERATE_TITLE = 0.4;
+export const MAX_SUMMARY_LENGTH = 500;
+export const MAX_ENRICH_TAGS = 8;
+export const MAX_ENRICH_TODOS = 10;
+export const MAX_TAG_LENGTH = 50;
+export const MAX_TODO_LENGTH = 200;
+export const MAX_OUTPUT_TOKENS_GENERATE_ENRICH = 600;
+export const TEMPERATURE_GENERATE_ENRICH = 0.4;
+export const ENRICH_TIMEOUT_MS = 5_000;

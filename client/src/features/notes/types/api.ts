@@ -1,9 +1,16 @@
 import type {
+  AskNoteResult,
+  AskNotesInput,
+  AttachmentDto,
   BulkNoteActions,
+  EnrichDismissalInput,
+  EnrichNoteRequestInput,
+  EnrichSuggestions,
   GenerateNoteTitleInput,
   NoteIdParams,
   NoteInputPayload,
   NotesQueryParams,
+  ReorderNotesInput,
 } from '@/features/notes/schemas';
 import type { ApiSuccessResponse, PaginatedApiSuccessResponse } from '@/types/response';
 import type { Note } from '@/features/notes/types/note';
@@ -17,6 +24,7 @@ export type NotesApiParams = Omit<NotesQueryParams, 'sort'> & {
 };
 export type PatchNoteInput = {
   status?: 'ARCHIVED' | 'TRASHED' | 'ACTIVE';
+  tags?: Array<string>;
   favorite?: boolean;
   pinned?: boolean;
 };
@@ -52,16 +60,59 @@ export type NotesFetchRouter = EnsureRouter<{
       body: NoteInputPayload;
     };
   };
+  '/api/v1/notes/:id/attachments': {
+    $post: {
+      body: { contentBase64: string; filename: string };
+      response: ApiSuccessResponse<AttachmentDto>;
+      params: NoteIdParams;
+    };
+  };
+  '/api/v1/ai/search/related': {
+    $get: {
+      response: ApiSuccessResponse<{ results: Array<AskNoteResult> }>;
+      query: { noteId: string; limit?: number };
+    };
+  };
+  '/api/v1/ai/generator/note-enrich': {
+    $post: {
+      response: ApiSuccessResponse<{ suggestions: EnrichSuggestions }>;
+      body: EnrichNoteRequestInput;
+    };
+  };
   '/api/v1/ai/generator/note-title': {
     $post: {
       response: ApiSuccessResponse<Prettify<Pick<Note, 'title'>>>;
       body: GenerateNoteTitleInput;
     };
   };
+  '/api/v1/ai/generator/enrich-dismissal': {
+    $post: {
+      response: ApiSuccessResponse<{ dismissed: boolean }>;
+      body: EnrichDismissalInput;
+    };
+  };
+  '/api/v1/ai/search/ask-notes': {
+    $post: {
+      response: ApiSuccessResponse<{ results: Array<AskNoteResult> }>;
+      body: AskNotesInput;
+    };
+  };
+  '/api/v1/notes/:id/backlinks': {
+    $get: {
+      response: ApiSuccessResponse<Array<Note>>;
+      params: NoteIdParams;
+    };
+  };
   '/api/v1/notes/bulk/actions': {
     $post: {
       response: ApiSuccessResponse<number>;
       body: BulkNoteActions;
+    };
+  };
+  '/api/v1/notes/reorder': {
+    $patch: {
+      response: ApiSuccessResponse<number>;
+      body: ReorderNotesInput;
     };
   };
   '/api/v1/notes/trash': {

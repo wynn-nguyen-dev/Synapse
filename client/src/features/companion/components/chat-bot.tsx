@@ -3,8 +3,6 @@ import type { UIMessage } from 'ai';
 
 import { useCallback, useImperativeHandle, useState } from 'react';
 
-import { useNavigate } from '@tanstack/react-router';
-
 import { m } from '@/paraglide/messages';
 import { cn } from '@/lib/utils';
 
@@ -19,9 +17,13 @@ import { Shimmer } from '@/components/ai-elements/shimmer';
 
 import { SparklesIcon } from 'lucide-react';
 
+import {
+  NOTE_CONTENT_MAX_LENGTH,
+  openQuickCapture,
+  useNoteCreatePrefillStore,
+} from '@/features/notes';
 import { ConversationPromptInput } from '@/features/companion/components/conversation-prompt-input';
 import { ConversationLoadOlder } from '@/features/companion/components/conversation-load-older';
-import { NOTE_CONTENT_MAX_LENGTH, useNoteCreatePrefillStore } from '@/features/notes';
 import { getCopyableMessageText } from '@/features/companion/lib/message-text';
 import { useMessageTree } from '@/features/companion/hooks/use-message-tree';
 import { MessageView } from '@/features/companion/components/message-view';
@@ -60,8 +62,6 @@ function ChatBot({
   const [text, setText] = useState<string>('');
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
 
-  const navigate = useNavigate();
-
   const handleEditCommitted = useCallback(() => setEditingMessageId(null), []);
 
   const { handleSwitchVersion, handleEditSave, isGenerating, handleRetry, handleBranch, chat } =
@@ -73,15 +73,12 @@ function ChatBot({
       onFinish,
     });
 
-  const handleCreateNote = useCallback(
-    (message: UIMessage) => {
-      const content = getCopyableMessageText(message);
-      if (!content) return;
-      useNoteCreatePrefillStore.getState().set(content.slice(0, NOTE_CONTENT_MAX_LENGTH));
-      void navigate({ to: '/notes/create' });
-    },
-    [navigate],
-  );
+  const handleCreateNote = useCallback((message: UIMessage) => {
+    const content = getCopyableMessageText(message);
+    if (!content) return;
+    useNoteCreatePrefillStore.getState().set(content.slice(0, NOTE_CONTENT_MAX_LENGTH));
+    openQuickCapture();
+  }, []);
 
   useImperativeHandle(
     ref,

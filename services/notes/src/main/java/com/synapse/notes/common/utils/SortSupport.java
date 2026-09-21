@@ -9,6 +9,8 @@ import org.springframework.data.domain.Sort;
 
 public class SortSupport {
 
+  private static final Set<String> NULLS_LAST_FIELDS = Set.of("sortOrder");
+
   public static Pageable toPageable(
       int page, int pageSize, List<String> sortList, Set<String> allowedSortFields) {
     List<Sort.Order> orders = new ArrayList<>();
@@ -27,7 +29,11 @@ public class SortSupport {
           if (parts.length > 1 && parts[1].trim().equalsIgnoreCase("desc")) {
             direction = Sort.Direction.DESC;
           }
-          orders.add(new Sort.Order(direction, property));
+          Sort.NullHandling nullHandling =
+              NULLS_LAST_FIELDS.contains(property)
+                  ? Sort.NullHandling.NULLS_LAST
+                  : Sort.NullHandling.NATIVE;
+          orders.add(new Sort.Order(direction, property, nullHandling));
         }
       }
     }

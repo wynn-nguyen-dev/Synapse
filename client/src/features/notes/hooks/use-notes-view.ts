@@ -7,8 +7,13 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 
 import { useMultiSelect } from '@/hooks/use-multi-select';
 
+import {
+  DEFAULT_NOTES_QUERY_PARAMS,
+  NOTE_VIEW_CONFIG,
+  openQuickCapture,
+} from '@/features/notes/constants';
 import { useEmptyTrash, useInfiniteNotes, useNotesBulkAction } from '@/features/notes/hooks/api';
-import { NOTE_VIEW_CONFIG } from '@/features/notes/constants';
+import { useReorderNotes } from '@/features/notes/hooks/api/use-reorder-notes';
 
 export function useNotesView(viewMode: NoteViewMode) {
   const navigate = useNavigate();
@@ -18,10 +23,16 @@ export function useNotesView(viewMode: NoteViewMode) {
   // 1. Config & Param Calculations
   const { filters: apiFilters, emptyVariant, description, title } = NOTE_VIEW_CONFIG[viewMode];
 
+  const isDefaultSort = sort === DEFAULT_NOTES_QUERY_PARAMS.sort;
   const apiParams = {
     ...search,
     ...apiFilters,
-    sort: viewMode === 'active' ? ['pinned,desc', sort] : [sort],
+    sort:
+      viewMode === 'active'
+        ? isDefaultSort
+          ? ['pinned,desc', 'sortOrder,asc', 'updatedAt,desc']
+          : ['pinned,desc', sort]
+        : [sort],
   };
 
   const { page, ...stableParams } = apiParams;
@@ -44,6 +55,8 @@ export function useNotesView(viewMode: NoteViewMode) {
     onSuccess: () => multiSelect.clearSelection(),
   });
 
+  const { mutate: reorderNotes } = useReorderNotes();
+
   // 4. Actions / Navigation Handlers
   const changeSort = (newSort?: NotesQueryParams['sort']) => {
     void navigate({
@@ -56,12 +69,9 @@ export function useNotesView(viewMode: NoteViewMode) {
     });
   };
 
-  const navigateToCreate = () => {
-    void navigate({ to: '/notes/create' });
-  };
-
   const resolvedEmptyVariant = query ? 'no-results' : emptyVariant;
   const isBulkActive = multiSelect.selectedCount > 0;
+  const reorderable = viewMode === 'active' && isDefaultSort && !query && !isBulkActive;
 
   return {
     config: {
@@ -72,8 +82,9 @@ export function useNotesView(viewMode: NoteViewMode) {
     actions: {
       executeBulkAction,
       executeEmptyTrash,
-      navigateToCreate,
+      openQuickCapture,
       changeSort,
+      reorder: reorderNotes,
     },
     infinite: {
       isFetchingNextPage,
@@ -86,6 +97,7 @@ export function useNotesView(viewMode: NoteViewMode) {
     },
     state: {
       isBulkActive,
+      reorderable,
       sort,
     },
     status: {

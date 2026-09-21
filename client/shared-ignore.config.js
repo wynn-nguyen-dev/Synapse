@@ -84,4 +84,5 @@ export const LINT_IGNORE_PATTERNS = [
   'src/components/ai-elements/**',
   'src/routeTree.gen.ts',
   'src/**/__tests__/**',
+  '!vite.config.ts',
 ];

@@ -26,6 +26,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 import { CommandPalette } from '@/features/command-palette/components';
+import { AskNotesDialog, QuickCaptureDialog } from '@/features/notes';
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: ({ location, context }) => {
@@ -88,6 +89,8 @@ function AppLayout() {
   return (
     <ConfirmProvider>
       <CommandPalette />
+      <QuickCaptureDialog />
+      <AskNotesDialog />
 
       <SidebarManagerProvider>
         <AppGlobalKeybinds />

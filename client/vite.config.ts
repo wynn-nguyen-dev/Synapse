@@ -3,6 +3,7 @@ import path from 'node:path';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import { devtools } from '@tanstack/devtools-vite';
 
+import { pureAnnotations } from '@lexical/compiler/PureAnnotations';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { imagetools } from 'vite-imagetools';
@@ -91,6 +92,7 @@ export default defineConfig({
       outdir: './src/paraglide',
       emitTsDeclarations: true,
     }),
+    pureAnnotations(),
     tanstackRouter({
       autoCodeSplitting: true,
       target: 'react',
@@ -161,5 +163,6 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
     tsconfigPaths: true,
+    conditions: ['source'],
   },
 });

@@ -1,6 +1,6 @@
 import type { ComponentProps, InputHTMLAttributes, ReactNode } from 'react';
 
-import { isValidElement } from 'react';
+import { Children, isValidElement, useMemo } from 'react';
 import Markdown from 'react-markdown';
 
 import remarkGfm from 'remark-gfm';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface MarkdownRendererProps {
+  onWikilinkClick?: (title: string) => void;
   className?: string;
   content: string;
 }
@@ -47,6 +48,53 @@ function remarkHighlight() {
               children: [{ value: match[1] ?? '', type: 'text' }],
               data: { hName: 'mark' },
               type: 'mark',
+            });
+            lastIndex = regex.lastIndex;
+          }
+
+          if (lastIndex < child.value.length) {
+            newChildren.push({
+              value: child.value.slice(lastIndex),
+              type: 'text',
+            });
+          }
+        } else {
+          visitNodes(child);
+          newChildren.push(child);
+        }
+      }
+      node.children = newChildren;
+    };
+
+    visitNodes(tree);
+  };
+}
+
+function remarkWikilink() {
+  return (tree: ASTNode) => {
+    const visitNodes = (node: ASTNode): void => {
+      if (!node.children || !Array.isArray(node.children)) return;
+
+      const newChildren: Array<ASTNode> = [];
+      for (const child of node.children) {
+        if (child.type === 'text' && typeof child.value === 'string') {
+          const regex = /\[\[([^\][]+)\]\]/g;
+          let lastIndex = 0;
+          let match: RegExpExecArray | null;
+
+          while ((match = regex.exec(child.value)) !== null) {
+            const title = (match[1] ?? '').trim();
+            if (title.length === 0) continue;
+            if (match.index > lastIndex) {
+              newChildren.push({
+                value: child.value.slice(lastIndex, match.index),
+                type: 'text',
+              });
+            }
+            newChildren.push({
+              children: [{ value: title, type: 'text' }],
+              data: { hName: 'wikilink' },
+              type: 'wikilink',
             });
             lastIndex = regex.lastIndex;
           }
@@ -160,6 +208,31 @@ function Mark({ children }: ComponentProps<'mark'>) {
   );
 }
 
+function Wikilink({
+  children,
+  onWikilinkClick,
+}: {
+  onWikilinkClick?: ((title: string) => void) | undefined;
+  children?: ReactNode;
+}) {
+  const title = Children.toArray(children)
+    .filter((child): child is string => typeof child === 'string')
+    .join('');
+
+  if (!onWikilinkClick || !title) return <span>{children}</span>;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onWikilinkClick(title)}
+      title={title}
+      className="text-primary underline decoration-dotted underline-offset-2 cursor-pointer hover:opacity-80 transition-opacity"
+    >
+      {children}
+    </button>
+  );
+}
+
 function H3({ children }: ComponentProps<'h3'>) {
   return (
     <h3 className="text-base font-semibold mt-2.5 mb-1 text-foreground tracking-tight">
@@ -224,12 +297,35 @@ const MARKDOWN_COMPONENTS = {
   em: Em,
 } as const;
 
-export default function MarkdownRenderer({ className, content }: MarkdownRendererProps) {
+export default function MarkdownRenderer({
+  className,
+  content,
+  onWikilinkClick,
+}: MarkdownRendererProps) {
+  const components = useMemo(
+    () => ({
+      ...MARKDOWN_COMPONENTS,
+      // oxlint-disable-next-line react/no-unstable-nested-components -- memoized keyed on onWikilinkClick (RULES.md static-components guidance); identity is stable unless the handler changes
+      wikilink: (props: { children?: ReactNode }) => (
+        <Wikilink {...props} onWikilinkClick={onWikilinkClick} />
+      ),
+    }),
+    [onWikilinkClick],
+  );
+
+  const remarkPlugins = useMemo(
+    () =>
+      onWikilinkClick !== undefined
+        ? [remarkGfm, remarkHighlight, remarkWikilink]
+        : [remarkGfm, remarkHighlight],
+    [onWikilinkClick],
+  );
+
   if (!content) return null;
 
   return (
     <div className={className}>
-      <Markdown remarkPlugins={[remarkGfm, remarkHighlight]} components={MARKDOWN_COMPONENTS}>
+      <Markdown remarkPlugins={remarkPlugins} components={components}>
         {content}
       </Markdown>
     </div>

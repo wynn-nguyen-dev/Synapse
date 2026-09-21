@@ -6,6 +6,7 @@ import { Fragment } from 'react';
 
 import { m } from '@/paraglide/messages';
 
+import { Sortable, SortableContent, SortableItem } from '@/components/ui/sortable';
 import { Button } from '@/components/ui/button';
 
 import { PlusIcon } from 'lucide-react';
@@ -14,6 +15,7 @@ import { NotesListEmpty, NotesListCardSkeleton } from '@/features/notes/componen
 
 interface NotesListProps {
   onCreateClick?: (event: BaseUIEvent<React.MouseEvent<HTMLButtonElement>>) => void;
+  onReorder?: ((orderedIds: Array<string>) => void) | undefined;
   renderItem: (note: Note) => ReactNode;
   emptyVariant: NotesEmptyVariant;
   loadingCardCount?: number;
@@ -21,11 +23,14 @@ interface NotesListProps {
   notes: Array<Note>;
 }
 
+const GRID_CLASSES = 'grid gap-4 grid-cols-1 @4xl:grid-cols-2 @8xl:grid-cols-3';
+
 export default function NotesList({
   loadingCardCount = 6,
   onCreateClick,
   emptyVariant,
   renderItem,
+  onReorder,
   isLoading,
   notes,
 }: NotesListProps) {
@@ -43,11 +48,30 @@ export default function NotesList({
       </NotesListEmpty>
     );
 
+  if (!onReorder) {
+    return (
+      <div className={GRID_CLASSES}>
+        {notes.map((note) => (
+          <Fragment key={note.id}>{renderItem(note)}</Fragment>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-4 grid-cols-1 @4xl:grid-cols-2 @8xl:grid-cols-3">
-      {notes.map((note) => (
-        <Fragment key={note.id}>{renderItem(note)}</Fragment>
-      ))}
-    </div>
+    <Sortable
+      value={notes}
+      getItemValue={(note) => note.id}
+      onValueChange={(ordered) => onReorder(ordered.map((note) => note.id))}
+      orientation="mixed"
+    >
+      <SortableContent className={GRID_CLASSES}>
+        {notes.map((note) => (
+          <SortableItem key={note.id} value={note.id}>
+            {renderItem(note)}
+          </SortableItem>
+        ))}
+      </SortableContent>
+    </Sortable>
   );
 }

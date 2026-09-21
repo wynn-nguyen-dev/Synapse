@@ -7,6 +7,7 @@ import { conversationRoute } from '@/conversation';
 import { generatorRoute } from '@/generator';
 import { pubsubRoute } from '@/embeddings';
 import { settingsRoute } from '@/settings';
+import { searchRoute } from '@/search';
 import { chatRoute } from '@/chat';
 
 const SKIP_LOG_PATHS = ['/health', '/favicon.ico'];
@@ -31,6 +32,7 @@ app.route('/', pubsubRoute);
 app.route('/', conversationRoute);
 app.route('/', settingsRoute);
 app.route('/', generatorRoute);
+app.route('/', searchRoute);
 app.route('/', chatRoute);
 
 export default app;

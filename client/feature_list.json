@@ -35,9 +35,9 @@
     {
       "id": "feat-005",
       "name": "Tags Management",
-      "description": "Tag CRUD with color badges, note counts, filter sidebar integration.",
+      "description": "Tag CRUD with color badges, note counts, filter sidebar integration. REMOVED (2026-09-21): all implementation files deleted as buggy/unused (use-tags.ts, tags-page.tsx, tag-filter-bar.tsx); note.tags is now an unpopulated optional field. Superseded by enrich auto-tags (planned).",
       "dependencies": ["feat-004"],
-      "status": "done",
+      "status": "deprecated",
       "evidence": "src/features/notes/hooks/use-tags.ts, src/features/notes/components/tags-page.tsx, src/features/notes/components/tag-filter-bar.tsx"
     },
     {
@@ -83,9 +83,9 @@
     {
       "id": "feat-011",
       "name": "Draft Editor (Scratchpad)",
-      "description": "Quick scratchpad with auto-save, copy to clipboard, export to note.",
+      "description": "Quick scratchpad with auto-save, copy to clipboard, export to note. REMOVED (2026-09-21): draft-editor.tsx deleted as unused. Superseded by quick-capture dialog (planned, feat-028).",
       "dependencies": [],
-      "status": "done",
+      "status": "deprecated",
       "evidence": "src/features/notes/components/draft-editor.tsx"
     },
     {
@@ -107,9 +107,9 @@
     {
       "id": "feat-014",
       "name": "Notes Version History",
-      "description": "View and restore previous note versions from localStorage history.",
+      "description": "View and restore previous note versions from localStorage history. REMOVED (2026-09-21): version-history.tsx deleted as buggy/unused.",
       "dependencies": ["feat-004"],
-      "status": "done",
+      "status": "deprecated",
       "evidence": "src/features/notes/components/version-history.tsx"
     },
     {
@@ -123,9 +123,9 @@
     {
       "id": "feat-016",
       "name": "Note Templates",
-      "description": "6 predefined templates (Meeting, Journal, Project, RFC, Sprint Retro, Study) + custom templates with markdown content, title patterns.",
+      "description": "6 predefined templates (Meeting, Journal, Project, RFC, Sprint Retro, Study) + custom templates with markdown content, title patterns. REMOVED (2026-09-21): template-selector.tsx deleted as unused (purged in feat-062 sweep).",
       "dependencies": ["feat-004"],
-      "status": "done",
+      "status": "deprecated",
       "evidence": "src/features/chat/lib/companion-config.ts (PREDEFINED_TEMPLATES), src/features/notes/components/template-selector.tsx"
     },
     {
@@ -139,9 +139,9 @@
     {
       "id": "feat-018",
       "name": "Filter Sidebar for Notes",
-      "description": "Collapsible filter sidebar with tag filtering, category folders, recent notes list.",
+      "description": "Collapsible filter sidebar with tag filtering, category folders, recent notes list. REMOVED (2026-09-21): filter-sidebar.tsx deleted as unused.",
       "dependencies": ["feat-004"],
-      "status": "done",
+      "status": "deprecated",
       "evidence": "src/features/notes/components/filter-sidebar.tsx"
     },
     {
@@ -155,17 +155,17 @@
     {
       "id": "feat-020",
       "name": "Note Templates Settings Tab",
-      "description": "Full CRUD for custom note templates within settings page, with inline dialog editor.",
+      "description": "Full CRUD for custom note templates within settings page, with inline dialog editor. REMOVED (2026-09-21): templates-tab.tsx deleted (settings tab dropped in feat-039, purged in feat-062 sweep).",
       "dependencies": ["feat-007"],
-      "status": "done",
+      "status": "deprecated",
       "evidence": "src/features/settings/components/templates-tab.tsx"
     },
     {
       "id": "feat-021",
       "name": "Companion Config Persistence",
-      "description": "DEPRECATED (2026-08-01): localStorage CompanionConfig (name, temperature, avatar, persona, prompt, welcome message) removed. Replaced by server-backed AI settings (feat-033) — see src/features/settings/hooks/use-ai-settings.ts + /api/v1/ai/settings.",
+      "description": "DEPRECATED (2026-08-01): localStorage CompanionConfig (name, temperature, avatar, persona, prompt, welcome message) removed. Replaced by server-backed AI settings (feat-033) — see src/features/settings/hooks/use-ai-settings.ts + /api/v1/ai/settings. REMOVED (2026-09-21): implementation files deleted; status flipped done → deprecated.",
       "dependencies": ["feat-006"],
-      "status": "done",
+      "status": "deprecated",
       "evidence": "src/features/chat/lib/companion-config.ts (trimmed to NoteTemplate helpers only)"
     },
     {
@@ -219,10 +219,10 @@
     {
       "id": "feat-028",
       "name": "Quick Note Dialog",
-      "description": "Floating quick-capture note dialog with inline editor (present in old, not yet integrated in current).",
+      "description": "DONE (2026-09-21, as quick-capture dialog — the ONLY create path): floating dialog with content-only editor (RHF+zod noteInputSchema), Ctrl/Cmd+Enter save, dirty outside-click/Escape/X confirmed via useConfirm (discard loses content), success closes + navigates /notes/$noteId (replace). Mounted in _app/route.tsx beside CommandPalette, opened via open-quick-capture window event; all 5 former /notes/create triggers retargeted (palette /create keeps prefill, header New dropdown, go-to-create-note 'c n', empty-state/FAB via useNotesView.openQuickCapture, chat create-note keeps prefill). /notes/create route deleted + routeTree regenerated. 16 orphan create-family i18n keys pruned en/vi (parity 640/640); 3 new notes_quick_capture_discard_* keys. Manual smoke pending: open via each trigger, prefill from palette/chat, Ctrl+Enter save → detail, dirty-close confirms, clean-close silent.",
       "dependencies": ["feat-004"],
-      "status": "not-started",
-      "evidence": "Missing from current project. Present in old as src/features/notes/components/NoteQuickDialog.tsx"
+      "status": "done",
+      "evidence": "src/features/notes/components/quick-capture-dialog.tsx (NEW) + quick-capture-form.tsx (NEW), src/features/notes/hooks/use-note-create.ts (dialog-oriented: onCreated, page actions removed), src/features/notes/constants.ts (QUICK_CAPTURE_OPEN_EVENT + openQuickCapture), src/routes/_app/route.tsx (mount), 5 triggers retargeted, src/routes/_app/notes/create.tsx (DELETED), routeTree.gen.ts, messages/en.json + vi.json (3 new keys, 16 orphans pruned)"
     },
     {
       "id": "feat-029",
@@ -503,6 +503,54 @@
       "dependencies": ["feat-063"],
       "status": "done",
       "evidence": "src/features/companion/hooks/use-message-tree.ts (leaf reorder + leafChanged guard), src/components/app/pages/error-page.tsx (dev-only StackTrace, details panel removed), messages/en.json + messages/vi.json (6 orphan keys removed). Verified: gen:paraglide clean, install clean, typecheck exit 0, eslint 0 errors/warnings on touched files, oxfmt clean, no stale key references. Manual smoke pending: agent/chat mode reply persists after stream, reload keeps history, dev route error shows StackTrace, prod build has no stack. Not committed (user manages git)."
+    },
+    {
+      "id": "feat-065",
+      "name": "Note Enrich via Ctrl+Space + Tag Editor (2026-09-21)",
+      "description": "DONE: AI enrichment suggestions with no buttons — Ctrl+Space inside the note editor (registry 'enrich-note', editor section, remappable; IME-safe via matchesCombo guard) fires a window event the suggestion bar listens to. Backend (services/ai generator/): POST /generator/note-enrich {content, noteId?} → {suggestions {title?, summary?, tags[], todos[{text, due?}]}} via getChatModel + Output.object + 5s race fallback + reportRateLimit on 429/403 (same fix also applied to generateNoteTitle — closes Track A gap); POST /generator/enrich-dismissal {noteId, kind} idempotent upsert into new enrich_dismissals(userId, noteId, kind PK) table (migration 0002); dismissed kinds filtered server-side. Client: EnrichSuggestionBar (shimmer loading, per-kind rows with Apply/Dismiss; title→title field, summary→blockquote append, todos→checklist append, tags→PATCH; apply also dismisses the kind) + NoteTagEditor (BadgeOverflow badges + Enter/comma input + remove, PATCH per commit, keyed by noteId) + useNoteTags hook (render-derived state, no effects) + useGenerateNoteEnrich/useDismissEnrichKind/usePatchNoteTags (lists invalidate only — detail form never wiped). Tag badges visible in both tabs; empty-editor hint shows live KeyCombo. 14 new i18n keys en/vi (parity 653/653). Manual smoke pending: Ctrl+Space enrich → apply each kind → dismiss persists across re-enrich → tag add/remove → shortcut remappable in settings.",
+      "dependencies": ["feat-004", "feat-034"],
+      "status": "done",
+      "evidence": "services/ai/src/generator/{route,services,schemas,constants}.ts, services/ai/src/database/schema.ts (enrich_dismissals), services/ai/drizzle/0002_mute_shriek.sql, client/src/features/notes/components/enrich-suggestion-{bar,row}.tsx + note-tag-editor.tsx + hooks/use-note-tags.ts + hooks/api/use-{generate-note-enrich,dismiss-enrich-kind,patch-note-tags}.ts, client/src/components/shared/editor/lexical-keyboard-shortcuts.tsx (enrich-note case + NOTE_ENRICH_REQUEST_EVENT), client/src/config/keyboard-shortcuts.ts (registry), client/src/features/notes/{types/api.ts,schemas.ts,api/notes.http.ts,types/note.ts}, note-detail-page.tsx (mount), messages/en.json + vi.json (14 keys). Verified: ai typecheck + lint 0 errors, router tests 2 pass; client gen:paraglide + typecheck + lint 0 errors/warnings. Not committed (user manages git)."
+    },
+    {
+      "id": "feat-066",
+      "name": "Ask-Notes Semantic Search + Related-Notes Panel (2026-09-21)",
+      "description": "DONE: notes-side semantic re-find with citations that jump to note detail. Backend new services/ai/src/search/ module (basePath /search, mounted in app.ts): POST /search/ask-notes {query 1..500} reuses chat searchUserNotes (FTS fast-path → embedding RRF → recent fallback) + server-side ~200-char snippets around the first query-term match; GET /search/related?noteId=&limit= (default 2, max 5) cosine top-k over note_embeddings excluding self, [] when the anchor has no embedding. Client: AskNotesDialog (debounced 300ms live results, Enter jumps to first hit, click jumps + closes; opened via palette /ask with inline-query prefill through the event detail, empty-state Ask button on no-results, mounted at AppLayout) + RelatedNotesPanel (2 links, Skeleton loading, hidden when empty, mounted under the tag editor on the detail page). 5 new i18n keys en/vi (parity 658/658). Manual smoke pending: /ask with keywords vs meaning-only queries, jump lands on note, related shows 2 relevant links, empty anchor hides panel, boot AI service with real keys.",
+      "dependencies": ["feat-004", "feat-006"],
+      "status": "done",
+      "evidence": "services/ai/src/search/{route,services,repository,schemas,index}.ts, services/ai/src/app.ts (mount), client/src/features/notes/components/ask-notes-dialog.tsx + related-notes-panel.tsx + hooks/api/use-{ask-notes,related-notes}.ts, client/src/features/notes/{types/api.ts,schemas.ts,api/notes.http.ts,constants.ts}, command-palette /ask command, notes-list-empty Ask button, route mount, note-detail-page mount, messages/en.json + vi.json (5 keys). Verified: ai typecheck + lint 0 errors, router tests 2 pass; client gen:paraglide + typecheck + lint 0 errors/warnings. Not committed (user manages git)."
+    },
+    {
+      "id": "feat-067",
+      "name": "Minimal Wikilinks + Backlinks Section (2026-09-21)",
+      "description": "DONE: explicit note-to-note linking. [[Title]] in note content renders as a clickable dotted-underline chip in the preview tab via a new remarkWikilink AST plugin in MarkdownRenderer (mirrors the remarkHighlight pattern; plugin activates only when onWikilinkClick is wired, so chat/other consumers render byte-identically); click resolves through GET /notes?q=title&pageSize=1 (first FTS match) and navigates, toast when untitled match missing. BacklinksSection lists notes linking to the current note via GET /notes/:id/backlinks (Phase 2 backend: LIKE with ESCAPE, excludes self/trashed, top 20), hidden when empty. 2 new i18n keys en/vi (parity 660/660). Manual smoke pending: [[title]] renders + jumps, missing title toasts, backlinks list + navigate, boot notes service for the endpoint.",
+      "dependencies": ["feat-004"],
+      "status": "done",
+      "evidence": "client/src/components/shared/markdown-renderer.tsx (remarkWikilink + Wikilink + gated plugins/components memos), client/src/features/notes/components/backlinks-section.tsx + hooks/api/use-backlinks.ts + api/notes.http.ts (getBacklinksClient) + types/api.ts (router entry), note-detail-page.tsx (resolveWikilink + mounts), messages/en.json + vi.json (notes_backlinks_title, notes_wikilink_not_found). Verified: gen:paraglide + typecheck + lint 0 errors/warnings. Not committed (user manages git)."
+    },
+    {
+      "id": "feat-068",
+      "name": "Unified Attachments + Paste-Long-Text-to-File (2026-09-21)",
+      "description": "DONE: one attachment mechanism everywhere, backed by the Phase 2 note_attachments store. Pasting text over NOTE_CONTENT_MAX_LENGTH (1500) into the chat prompt or the quick-capture textarea converts the whole paste into a .md file chip (capture-phase interception in chat so the primitive's file-drop handling survives; empty dialog content gets the paste's first line as a lead so create validation passes) with a success toast. Chat files ride the existing inline FilePart flow; dialog files upload (base64 POST) after note creation, then the normal created-toast + close + navigate runs, and the Phase 2 mirror re-embeds with attachment text. Dialog also gains an attach button (text-file picker) + removable chips + id-stamped files (nanoid, no index keys); dirty guard covers attached files. Lexical detail editor deliberately untouched. 3 new i18n keys en/vi (parity 663/663). Manual smoke pending: long paste in chat → chip → send; long paste in dialog → chip + lead line → save → note has attachment + RAG finds its text; attach-button pick + remove; oversize/empty edge server-400s toast.",
+      "dependencies": ["feat-004", "feat-028"],
+      "status": "done",
+      "evidence": "client/src/features/notes/attachments.ts (threshold/file/base64/lead helpers), companion conversation-prompt-input.tsx (capture handler), notes use-note-create.ts (files state + upload-on-success via mutation variables), quick-capture-{form,dialog}.tsx (picker + chips + paste + guard), notes.http.ts + types/api.ts + schemas.ts (attachment POST plumbing), messages/en.json + vi.json (3 keys). Verified: gen:paraglide + typecheck + lint 0 errors/warnings. Not committed (user manages git)."
+    },
+    {
+      "id": "feat-069",
+      "name": "Bulk Actions on Dice ActionBar (2026-09-21)",
+      "description": "DONE: bulk bar re-composed on ui/action-bar.tsx primitives (Root + Group + Item + Separator) with identical styling, majority logic, and toasts. Floating bottom-center portal bar with roving-arrow-key navigation; item clicks intentionally do not close the bar (no onOpenChange passed); the 250ms exit fade moved over from SelectionToolbar (open stays mounted while closing). Count pill/label markup preserved verbatim (not ActionBarSelection, to avoid fighting its chrome). Now-unused shared SelectionToolbar deleted + barrel export removed. Manual smoke pending: select across views → bar appears bottom-center → each action works with correct toasts → arrow keys move between items → deselect fades out.",
+      "dependencies": ["feat-031", "feat-040"],
+      "status": "done",
+      "evidence": "client/src/features/notes/components/notes-bulk-actions.tsx (rewrite), client/src/components/shared/selection-toolbar.tsx (DELETED) + shared/index.ts. Verified: typecheck + lint 0 errors/warnings. Not committed (user manages git)."
+    },
+    {
+      "id": "feat-070",
+      "name": "Manual Note Reorder via Sortable (2026-09-21)",
+      "description": "DONE: drag-to-reorder on the active notes view (default sort only). Grip handle in each card header (hover-reveal on desktop, always visible on coarse pointers; handle-only dragging so card clicks, dropdowns, and touch long-press select are unaffected) + Sortable/SortableContent/SortableItem around the grid (orientation mixed — no axis lock for the 2D grid). Drop persists via PATCH /notes/reorder with optimistic page-local re-chunk + rollback + lists invalidation on settle. Active view sends pinned,desc sortOrder,asc updatedAt,desc on default sort; explicit sorts omit sortOrder (manual order overridden, as decided). Gated to active view + default sort + no search + no bulk selection; favorites/archive/trash unchanged. Integer sortOrder kept (Lexorank rejected). 2 new i18n keys en/vi (parity 665/665). Manual smoke pending: drag within page → order persists after reload; cross-group (pinned) drags snap back to pinned-first (server truth); explicit sort disables handles; multi-page reorder keeps all rows.",
+      "dependencies": ["feat-004", "feat-051"],
+      "status": "done",
+      "evidence": "client/src/features/notes/components/notes-list.tsx (Sortable branch) + note-card.tsx (reorderable handle) + notes-view-page.tsx (wiring) + hooks/use-notes-view.ts (gating + sort composition) + hooks/api/use-reorder-notes.ts (optimistic) + api/notes.http.ts + types/api.ts + schemas.ts, messages/en.json + vi.json (2 keys). Verified: gen:paraglide + typecheck + lint 0 errors/warnings. Not committed (user manages git)."
     }
   ]
 }

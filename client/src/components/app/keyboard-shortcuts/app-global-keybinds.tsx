@@ -9,6 +9,8 @@ import { useTheme } from '@/providers/use-theme';
 
 import { useSidebarManager } from '@/components/ui/sidebar';
 
+import { openQuickCapture } from '@/features/notes';
+
 export default function AppGlobalKeybinds() {
   const navigate = useNavigate();
   const { toggleTheme } = useTheme();
@@ -30,7 +32,7 @@ export default function AppGlobalKeybinds() {
   });
 
   useHotkeyShortcut('go-to-create-note', () => {
-    void navigate({ to: '/notes/create' });
+    openQuickCapture();
     leftSidebar?.setOpenMobile(false);
 
     if (layoutMode === 'chat' && activeConversationId) {

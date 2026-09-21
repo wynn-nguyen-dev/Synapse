@@ -50,3 +50,58 @@ export const generateNoteTitleSchema = z.object({
 });
 
 export type GenerateNoteTitleInput = z.infer<typeof generateNoteTitleSchema>;
+
+export const enrichSuggestionKinds = ['title', 'summary', 'tags', 'todos'] as const;
+
+export type EnrichSuggestionKind = (typeof enrichSuggestionKinds)[number];
+
+export const enrichNoteRequestSchema = z.object({
+  content: z
+    .string()
+    .min(1, { message: m.validation_content_required() })
+    .max(NOTE_CONTENT_MAX_LENGTH, { message: m.validation_content_max() }),
+  noteId: z.uuid({ message: m.validation_id_required() }).optional(),
+});
+
+export type EnrichNoteRequestInput = z.infer<typeof enrichNoteRequestSchema>;
+
+export const enrichDismissalSchema = z.object({
+  noteId: z.uuid({ message: m.validation_id_required() }),
+  kind: z.enum(enrichSuggestionKinds),
+});
+
+export type EnrichDismissalInput = z.infer<typeof enrichDismissalSchema>;
+
+export interface EnrichTodoSuggestion {
+  due?: string | null;
+  text: string;
+}
+
+export interface EnrichSuggestions {
+  todos: Array<EnrichTodoSuggestion>;
+  tags: Array<string>;
+  summary?: string;
+  title?: string;
+}
+
+export interface AskNotesInput {
+  query: string;
+}
+
+export interface AskNoteResult {
+  title: string | null;
+  snippet: string;
+  noteId: string;
+}
+
+export interface AttachmentDto {
+  contentBase64: string;
+  createdAt: string;
+  filename: string;
+  noteId: string;
+  id: string;
+}
+
+export interface ReorderNotesInput {
+  noteIds: Array<string>;
+}

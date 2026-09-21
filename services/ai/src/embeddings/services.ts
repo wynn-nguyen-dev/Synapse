@@ -27,7 +27,7 @@ export async function handleNotesUpserted(
   const notesNeedingEmbedding: typeof items = [];
 
   for (const item of items) {
-    const { content, trashed, noteId, title } = item;
+    const { content, trashed, noteId, title, tags, attachmentHash } = item;
 
     const existing = existingMap.get(noteId);
 
@@ -44,12 +44,23 @@ export async function handleNotesUpserted(
     const hasContentChanged = existing?.content !== content;
     const isNewNote = !existing;
     const wasTrashedBefore = existing?.trashed === true;
+    const hasTagsChanged =
+      JSON.stringify([...(existing?.tags ?? [])].toSorted()) !==
+      JSON.stringify([...tags].toSorted());
+    const hasAttachmentsChanged = (existing?.attachmentHash ?? null) !== (attachmentHash ?? null);
 
     // * Chỉ tạo embedding nếu:
     // * - Note mới hoàn toàn
-    // * - Title hoặc Content có sự thay đổi
+    // * - Title, Content, Tags hoặc Attachments có sự thay đổi
     // * - Note vừa được Restore từ Trash (trước đó embedding đã bị xóa)
-    if (isNewNote || hasTitleChanged || hasContentChanged || wasTrashedBefore) {
+    if (
+      isNewNote ||
+      hasTitleChanged ||
+      hasContentChanged ||
+      hasTagsChanged ||
+      hasAttachmentsChanged ||
+      wasTrashedBefore
+    ) {
       notesNeedingEmbedding.push(item);
     }
   }
@@ -64,6 +75,8 @@ export async function handleNotesUpserted(
         trashed: item.trashed,
         userId: item.userId,
         id: item.noteId,
+        tags: item.tags,
+        attachmentHash: item.attachmentHash ?? null,
       })),
     );
   }
@@ -75,7 +88,14 @@ export async function handleNotesUpserted(
   if (notesNeedingEmbedding.length > 0) {
     const embeddingResults = await Promise.all(
       notesNeedingEmbedding.map(async (item) => {
-        const textToEmbed = item.title ? `${item.title}\n${item.content}` : item.content;
+        const textParts = item.title ? [item.title, item.content] : [item.content];
+        if (item.tags.length > 0) {
+          textParts.push(`Tags: ${item.tags.join(', ')}`);
+        }
+        for (const attachmentText of item.attachmentTexts) {
+          textParts.push(attachmentText);
+        }
+        const textToEmbed = textParts.join('\n');
         const safeContent = textToEmbed.slice(0, MAX_EMBEDDING_INPUT_LENGTH + MAX_TITLE_LENGTH);
         const embedding = await embedText(safeContent);
 

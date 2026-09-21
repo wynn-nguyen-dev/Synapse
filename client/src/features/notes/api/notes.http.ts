@@ -100,3 +100,94 @@ export async function generateNoteTitleClient(args: GenerateNoteTitleRequest) {
 
   return result.data;
 }
+
+export type GenerateNoteEnrichRequest = InferRequestType<
+  (typeof $fetch.api.v1.ai.generator)['note-enrich']['$post']
+>;
+export type GenerateNoteEnrichResponse = InferResponseType<
+  (typeof $fetch.api.v1.ai.generator)['note-enrich']['$post']
+>['data'];
+
+export async function generateNoteEnrichClient(args: GenerateNoteEnrichRequest) {
+  const result = await $fetch.api.v1.ai.generator['note-enrich'].$post(args);
+
+  return result.data;
+}
+
+export type DismissEnrichSuggestionRequest = InferRequestType<
+  (typeof $fetch.api.v1.ai.generator)['enrich-dismissal']['$post']
+>;
+export type DismissEnrichSuggestionResponse = InferResponseType<
+  (typeof $fetch.api.v1.ai.generator)['enrich-dismissal']['$post']
+>['data'];
+
+export async function dismissEnrichSuggestionClient(args: DismissEnrichSuggestionRequest) {
+  const result = await $fetch.api.v1.ai.generator['enrich-dismissal'].$post(args);
+
+  return result.data;
+}
+
+export type AskNotesRequest = InferRequestType<
+  (typeof $fetch.api.v1.ai.search)['ask-notes']['$post']
+>;
+export type AskNotesResponse = InferResponseType<
+  (typeof $fetch.api.v1.ai.search)['ask-notes']['$post']
+>['data'];
+
+export async function askNotesClient(args: AskNotesRequest) {
+  const result = await $fetch.api.v1.ai.search['ask-notes'].$post(args);
+
+  return result.data;
+}
+
+export type RelatedNotesRequest = InferRequestType<
+  (typeof $fetch.api.v1.ai.search)['related']['$get']
+>;
+export type RelatedNotesResponse = InferResponseType<
+  (typeof $fetch.api.v1.ai.search)['related']['$get']
+>['data'];
+
+export async function relatedNotesClient(args: RelatedNotesRequest) {
+  const result = await $fetch.api.v1.ai.search.related.$get(args);
+
+  return result.data;
+}
+
+export type GetBacklinksRequest = InferRequestType<
+  (typeof $fetch.api.v1.notes)[':id']['backlinks']['$get']
+>;
+export type GetBacklinksResponse = InferResponseType<
+  (typeof $fetch.api.v1.notes)[':id']['backlinks']['$get']
+>['data'];
+
+export async function getBacklinksClient(args: GetBacklinksRequest) {
+  const result = await $fetch.api.v1.notes[':id'].backlinks.$get(args);
+
+  return result.data;
+}
+
+export type CreateAttachmentRequest = InferRequestType<
+  (typeof $fetch.api.v1.notes)[':id']['attachments']['$post']
+>;
+export type CreateAttachmentResponse = InferResponseType<
+  (typeof $fetch.api.v1.notes)[':id']['attachments']['$post']
+>['data'];
+
+export async function createAttachmentClient(args: CreateAttachmentRequest) {
+  const result = await $fetch.api.v1.notes[':id'].attachments.$post(args);
+
+  return result.data;
+}
+
+export type ReorderNotesRequest = InferRequestType<
+  (typeof $fetch.api.v1.notes)['reorder']['$patch']
+>;
+export type ReorderNotesResponse = InferResponseType<
+  (typeof $fetch.api.v1.notes)['reorder']['$patch']
+>['data'];
+
+export async function reorderNotesClient(args: ReorderNotesRequest) {
+  const result = await $fetch.api.v1.notes.reorder.$patch(args);
+
+  return result.data;
+}

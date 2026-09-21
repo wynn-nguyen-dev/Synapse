@@ -2,6 +2,88 @@
 
 ## Status
 
+### What's Done (demo-loop Phase 8 — manual reorder — 2026-09-21, plan complete)
+
+- [x] **Drag-to-reorder** on the active view (default sort only): hover-reveal grip in each card header (always visible on touch), handle-only dragging (card clicks/dropdowns/long-press unaffected), grid wrapped in Sortable (mixed orientation, no axis lock) with default drop feedback.
+- [x] **Persistence** — `PATCH /notes/reorder` with optimistic page-local re-chunk, rollback + error toast, lists invalidation on settle. Active view sends `pinned,desc sortOrder,asc updatedAt,desc` on default sort; explicit sorts omit `sortOrder`. Gated: active + default sort + no search + no bulk selection.
+- [x] **i18n** — 2 new keys en/vi (parity 665/665); `gen:paraglide` clean.
+- [x] **Verification** — `typecheck` ✓ + `lint` ✓ 0 errors/warnings; `feature_list.json` feat-070 → done (JSON valid, 69 features). `plans/001` → DONE (all phases 0–10 complete).
+- [ ] **Manual smoke pending (operator)** — drag persists after reload; pinned cross-group snaps back (server truth); explicit sort hides handles; multi-page reorder keeps all rows.
+- Not committed (user manages git).
+
+### What's Done (demo-loop Phase 7 — bulk actions on ActionBar — 2026-09-21)
+
+- [x] **Recomposed `notes-bulk-actions.tsx` on Dice primitives** (Root + Group + Item + Separator): identical count pill/label, majority logic, toasts, and 250ms exit fade (open stays mounted while closing). Floating bottom-center portal with arrow-key navigation; item clicks don't close the bar (no `onOpenChange`); Escape no-op like before.
+- [x] **Deleted now-unused `shared/selection-toolbar.tsx`** + barrel export (only consumer was the bulk bar).
+- [x] **Verification** — `typecheck` ✓ + `lint` ✓ 0 errors/warnings; `feature_list.json` feat-069 → done (JSON valid, 68 features). `plans/001` stays IN PROGRESS.
+- [ ] **Manual smoke pending (operator)** — select across views → bar floats bottom-center → each action + toasts → arrow-key nav → deselect fades out.
+- Not committed (user manages git).
+
+### What's Done (demo-loop Phase 6 — unified attachments + paste-to-file — 2026-09-21)
+
+- [x] **Paste-to-file (chat prompt + capture dialog; Lexical editor untouched per scope)** — pasting text over 1500 chars converts the whole paste into a `pasted-<ts>.md` chip with success toast. Chat: capture-phase handler (primitive's file-drop survives), files ride the existing inline flow. Dialog: same threshold, plus lead-line fill when empty so create validation passes.
+- [x] **Dialog attach flow** — picker button (text files) + removable id-stamped chips; save uploads base64 attachments after note creation, then normal toast/close/navigate; Phase 2 mirror re-embeds with attachment text. Dirty guard covers attached files.
+- [x] **Plumbing** — `notes/attachments.ts` helpers, attachment POST client + router + DTO types, 3 new i18n keys en/vi (parity 663/663).
+- [x] **Verification** — `gen:paraglide` ✓ + `typecheck` ✓ + `lint` ✓ 0 errors/warnings; `feature_list.json` feat-068 → done (JSON valid, 67 features). `plans/001` stays IN PROGRESS.
+- [ ] **Manual smoke pending (operator)** — long paste in chat → chip → send; long paste in dialog → chip + lead → save → attachment on note + RAG finds text; picker pick/remove; dirty-close with files confirms.
+- Not committed (user manages git).
+
+### What's Done (demo-loop Phase 5 — wikilinks + backlinks — 2026-09-21)
+
+- [x] **Wikilinks** — `remarkWikilink` AST plugin in `MarkdownRenderer` (`[[Title]]` → clickable chip; mirrors `remarkHighlight`; plugin+components memoized and gated on `onWikilinkClick`, so chat/other consumers render byte-identically). Click resolves via `GET /notes?q=&pageSize=1` (first FTS match) → navigates; toast when no match.
+- [x] **BacklinksSection** — `GET /notes/:id/backlinks` (Phase 2 endpoint) via `useBacklinks`, hidden when empty, mounted under related panel.
+- [x] **i18n** — 2 new keys en/vi (parity 660/660); `gen:paraglide` clean.
+- [x] **Verification** — `typecheck` ✓ + `lint` ✓ 0 errors/warnings; `feature_list.json` feat-067 → done (JSON valid, 66 features). `plans/001` stays IN PROGRESS.
+- [ ] **Manual smoke pending (operator)** — `[[title]]` renders + jumps, missing title toasts, backlinks list + navigate, boot notes service for the endpoint.
+- Not committed (user manages git).
+
+### What's Done (demo-loop Phase 4 — ask-notes + related-notes — 2026-09-21)
+
+- [x] **Backend new `services/ai/src/search/` module** (basePath `/search`, mounted in `app.ts`) — `POST /search/ask-notes {query 1..500}` reuses `searchUserNotes` (FTS → RRF → recent fallback) with server-side ~200-char snippets; `GET /search/related?noteId=&limit=` (default 2, max 5) cosine top-k excluding self, `[]` without anchor embedding.
+- [x] **Client** — `AskNotesDialog` (debounced live results, Enter/click jump + close, `/ask` palette command with inline-query prefill via event detail, empty-state Ask button, AppLayout mount) + `RelatedNotesPanel` (2 links, Skeleton loading, hidden when empty, under tag editor). Event const + `openAskNotes()` live in notes constants (fast-refresh rule).
+- [x] **i18n** — 5 new keys en/vi (parity 658/658); `gen:paraglide` clean.
+- [x] **Verification** — ai `typecheck` ✓ + `lint` ✓ 0 errors + router tests 2 pass; client `typecheck` ✓ + `lint` ✓ 0 errors/warnings; `feature_list.json` feat-066 → done (JSON valid, 65 features). `plans/001` stays IN PROGRESS.
+- [ ] **Manual smoke pending (operator)** — `/ask` keyword vs meaning-only queries, jump lands, related relevance, empty-anchor hides panel, boot AI service with real keys.
+- Not committed (user manages git).
+
+### What's Done (demo-loop Phase 3 — enrich via Ctrl+Space + tag editor — 2026-09-21)
+
+- [x] **Backend (services/ai generator/)** — `POST /generator/note-enrich {content, noteId?}` → `{suggestions {title?, summary?, tags[], todos[]}}` (getChatModel + Output.object + 5s race + sanitize caps + `reportRateLimit()` on 429/403); `POST /generator/enrich-dismissal` idempotent upsert into new `enrich_dismissals(userId, noteId, kind PK)` (migration `0002_mute_shriek.sql`, apply via operator `db:migrate`); dismissed kinds filtered server-side. Same `reportRateLimit()` fix applied to `generateNoteTitle` — closes the Track A gap.
+- [x] **Client trigger** — registry `enrich-note = ctrl+space` (editor section, remappable, IME-safe); Lexical plugin dispatches `request-note-enrich` window event (const exported from the shared plugin — no shared→feature import). No buttons anywhere; empty-editor hint shows the live KeyCombo.
+- [x] **Suggestion bar + tag editor** — `EnrichSuggestionBar` (shimmer, per-kind Apply/Dismiss rows; apply writes title/summary/todos into the form, tags via PATCH; apply dismisses the kind) + `NoteTagEditor` (BadgeOverflow badges + Enter/comma input + remove, PATCH per commit) + `useNoteTags` (render-derived state, zero effects). Tags PATCH invalidates lists only — detail form never wiped.
+- [x] **i18n** — 14 new keys en/vi (parity 653/653); `gen:paraglide` clean.
+- [x] **Verification** — ai `typecheck` ✓ + `lint` ✓ 0 errors + router tests 2 pass; client `typecheck` ✓ + `lint` ✓ 0 errors/warnings; `feature_list.json` feat-065 → done (JSON valid, 64 features). `plans/001` stays IN PROGRESS.
+- [ ] **Manual smoke pending (operator)** — Ctrl+Space enrich → apply each kind → dismiss persists across re-enrich → tag add/remove → remap shortcut in settings → boot AI service with real keys + `db:migrate`.
+- Not committed (user manages git).
+
+### What's Done (demo-loop Phase 2 — notes-service backend: tags/sortOrder/attachments/backlinks — 2026-09-21)
+
+- [x] **Note model** — `tags` (`@ElementCollection` → `note_tags`, LAZY+SUBSELECT), `sortOrder` (nullable), `attachments` (`OneToMany` cascade ALL + orphanRemoval, LAZY+SUBSELECT); `replaceTags()` (trim/dedupe/sort/cap 20×50); `MAX_TAGS/MAX_TAG_LENGTH` constants. No migration files needed (`ddl-auto: update`).
+- [x] **New endpoints** — `PATCH /reorder {noteIds}` (transactional index assign, 404 on unknown id, max 100, no pubsub — order is local-only); `GET /{id}/backlinks` (LIKE with ESCAPE, excludes self/trashed, top 20); `POST|GET /{noteId}/attachments` + `DELETE /attachments/{id}` (base64 TEXT, cap 10/note + 200KB each, filename cap 255); `PATCH /{id}` accepts `tags`.
+- [x] **Ordering** — default sort now `pinned,desc sortOrder,asc updatedAt,desc`; `SortSupport` NULLS_LAST special-case for `sortOrder`; `sortOrder` added to allowed fields.
+- [x] **Delete hygiene** — bulk JPQL deletes bypass cascade: `emptyTrash` + bulk `DELETE_PERMANENT` now clear attachments (derived delete) + tag rows (native `deleteTagsByNoteIds`) first. Single delete cascades via entity remove. (`deleteExpiredTrashedNotes` has no callers — untouched; needs the same cleanup if ever wired.)
+- [x] **Mirror/RAG flow** — `NoteEventPayload` gains `tags` + decoded `attachmentTexts` + SHA-256 `attachmentHash`; attachment add/delete publishes `note.updated` with in-memory collection kept in sync (no stale-text re-embed). AI side: zod schemas defaulted (backward compatible), embed text = title+content+tags+attachments with tag/attachment change detection, mirror `notes` gains `tags text[]` + `attachment_hash` with generated migration `drizzle/0001_goofy_iron_patriot.sql` (apply via operator `db:migrate`).
+- [x] **Verification** — `gradlew compileJava` ✓, `spotlessCheck` ✓ (after `spotlessApply`), ai `typecheck` ✓ + `lint` ✓ 0 errors (remaining warnings pre-existing) + router tests `2 pass`. `compileTestJava`/DB tests + boot/contract smoke + `db:migrate` are operator steps.
+- Not committed (user manages git).
+
+### What's Done (demo-loop Phase 1 — quick-capture dialog, only create path — 2026-09-21)
+
+- [x] **Quick-capture dialog (NEW, 2 files)** — `quick-capture-dialog.tsx` (container: open state, `open-quick-capture` event listener, reset+prefill-consume on open, dirty close-guard via `useConfirm` for outside/Escape/X/Cancel) + `quick-capture-form.tsx` (pure presentational: RHF Controller + shadcn Field/Textarea, Ctrl/Cmd+Enter save, Save disabled unless content present). Reused dialog_title/desc/content_placeholder/save/saving/cancel keys; 3 new `notes_quick_capture_discard_*` keys en/vi.
+- [x] **One-way create** — `routes/_app/notes/create.tsx` deleted, `routeTree.gen.ts` regenerated; all 5 triggers fire `openQuickCapture()` (palette `/create` + chat keep prefill; header dropdown; `go-to-create-note 'c n'`; empty-state/FAB via renamed `useNotesView.openQuickCapture`). `use-note-create.ts` slimmed 129→83 lines (page actions dropped, `onCreated` close callback; dead prefill path removed after review).
+- [x] **i18n hygiene** — 16 orphan create-family keys pruned en/vi; parity 640/640; `gen:paraglide` clean.
+- [x] **Verification** — `typecheck` ✓ exit 0, `lint` ✓ 0 errors/warnings, `feature_list.json` feat-028 → done (JSON valid). `plans/001` → IN PROGRESS.
+- [ ] **Manual smoke pending (operator)** — open via each of the 5 triggers; prefill from palette/chat lands in the dialog; Ctrl+Enter saves → detail page; dirty outside-click/Escape/X confirms, clean close silent; Save disabled when empty.
+- Not committed (user manages git).
+
+### What's Done (demo-loop planning + baseline repair — 2026-09-21)
+
+- [x] **Baseline repair (was red, now green)** — newly vendored Dice UI files failed strict checks: `action-bar.tsx` (optional `onOpenChange` into context), `sortable.tsx` (6× `exactOptionalPropertyTypes` spreads: `autoScroll ?? true`, `cancelDrop ?? neverCancelDrop` (verified against dnd-kit source: absent ≡ never cancel), `strategy` interface → `SortingStrategy`, `disabled ?? false` ×2, DragOverlay `modifiers` reorder + `?? []`, conditional re-spreads for `measuring/sensors/handlers` with zero runtime change), `compose-refs.ts` (`Array<T>`, explicit returns, `.some()` instead of mutation-in-callback). Zero runtime change everywhere. Verified: `typecheck` ✓ exit 0, `lint` ✓ 0 errors (2 pre-existing warnings in untouched lines tolerated).
+- [x] **feature_list.json re-tag (approved)** — feat-005/011/014/016/018/020/021 `done` → `deprecated` with REMOVED (2026-09-21) notes; feat-010 stays `deprecated`; feat-047 keeps `done` (partial removal only). JSON parse-validated (63 features, 8 deprecated).
+- [x] **Track A router verified** — `bun test src/providers/router.test.ts` → `2 pass, 0 fail`. Remaining Track A item is manual: set 3 real keys in `AI_GOOGLE_GENERATIVE_AI_API_KEYS` + boot smoke (operator step, secrets never recorded).
+- [x] **Plan written** — `../plans/001-synapse-demo-loop.md` + `../plans/README.md` (planned at `c30acf0`): phases 0–10 (quick-capture-only create with `/notes/create` deletion, notes-backend tags/sortOrder/attachments/backlinks, Ctrl+Space enrich with server-side dismissals, ask-notes + related-notes, minimal `[[wikilinks]]`, unified base64 attachments + paste->file, Dice ActionBar bulk, integer-sortOrder drag reorder on active view only, dirty guards + update refresh + static chat greeting). Deferred: markdown import, BYO key, feat-023/024/027/035, Lexorank, tag filters.
+- [ ] **Manual smoke pending** — boot AI service with real keys; enrich/ask/related curl smokes are executor steps in the plan.
+- Not committed (user manages git).
+
 ### What's Done (merge-loop-fix-065 — feat-064, reply disappears + chat-mode crash + dev-only ErrorPage StackTrace)
 
 - [x] **Root cause (user-reported crash confirmed it)** — feat-063's merge effect derived the leaf as `conversation.currentMessageId ?? tree.currentLeafId`. The conversations-list snapshot lags mid-stream (server id still points at the user message before the assistant reply persists) → active path yanked backwards → `setChatMessages` truncated `chat.messages` after every turn (reply disappears). Worse: when the stale server id was absent from the local tree, `mergeTreeRows` (message-tree.ts:140) fell back to `rows.at(-1).id`, which never equals the input leaf → `setTree` fired every render → zustand `setState` → React "Maximum update depth exceeded" (user stack: `setTree ← use-message-tree.ts ← zustand setState ← forceStoreRerender`), surfacing as chat-mode 500 via the route error boundary → ErrorPage.

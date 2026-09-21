@@ -23,6 +23,8 @@ import {
   usePromptInputController,
 } from '@/components/ai-elements/prompt-input';
 
+import { createPastedFile, shouldConvertPasteToFile } from '@/features/notes/attachments';
+
 import {
   AttachmentActionsMenu,
   PromptToolActions,
@@ -107,10 +109,26 @@ function ConversationPromptInputContent({
     [onSubmit],
   );
 
+  // Capture-phase: the primitive's own onPaste (file drops) lives on the
+  // textarea and would be replaced by a bubble-phase override. Long plain-text
+  // pastes become file attachments instead of flooding the input.
+  const handlePasteCapture = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    const text = event.clipboardData.getData('text');
+    if (!shouldConvertPasteToFile(text)) return;
+    if (attachments.files.length >= MAX_CHAT_ATTACHMENTS) return;
+    event.preventDefault();
+    attachments.add([createPastedFile(text)]);
+    toast.success(m.notes_attachments_pasted_file());
+  };
+
   return (
     <div className="shrink-0 py-3">
       <div className="flex flex-col gap-2">
-        <div ref={containerRef} className={cn('w-full min-w-0 max-w-full', className)}>
+        <div
+          ref={containerRef}
+          onPasteCapture={handlePasteCapture}
+          className={cn('w-full min-w-0 max-w-full', className)}
+        >
           {/* Main Dynamic Morphing Prompt Input */}
           <PromptInput
             className={cn(

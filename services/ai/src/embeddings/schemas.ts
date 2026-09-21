@@ -8,6 +8,9 @@ export const noteUpsertedEventSchema = z.object({
   content: z.string(),
   userId: z.string(),
   noteId: z.uuid(),
+  tags: z.array(z.string()).default([]),
+  attachmentTexts: z.array(z.string()).default([]),
+  attachmentHash: z.string().nullable().default(null),
 });
 
 export type NoteUpsertedEventPayload = z.infer<typeof noteUpsertedEventSchema>;

@@ -9,11 +9,12 @@ import { cn } from '@/lib/utils';
 import MarkdownRenderer from '@/components/shared/markdown-renderer';
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { SortableItemHandle } from '@/components/ui/sortable';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-import { BookOpenIcon, CalendarIcon, PinIcon, StarIcon } from 'lucide-react';
+import { BookOpenIcon, CalendarIcon, GripVerticalIcon, PinIcon, StarIcon } from 'lucide-react';
 
 import { NoteCardDropdown } from '@/features/notes/components/note-card-dropdown';
 import { useNoteCard } from '@/features/notes/hooks';
@@ -23,10 +24,18 @@ interface NoteCardProps {
   onSelectRange?: (id: string) => void;
   viewMode?: NoteViewMode;
   note: NoteWithDetails;
+  reorderable?: boolean;
   isSelected?: boolean;
 }
 
-function NoteCard({ onToggleSelect, onSelectRange, isSelected, viewMode, note }: NoteCardProps) {
+function NoteCard({
+  onToggleSelect,
+  onSelectRange,
+  isSelected,
+  viewMode,
+  reorderable,
+  note,
+}: NoteCardProps) {
   const { actions, metrics, state, data } = useNoteCard({
     onToggleSelect,
     onSelectRange,
@@ -69,6 +78,14 @@ function NoteCard({ onToggleSelect, onSelectRange, isSelected, viewMode, note }:
         <CardHeader className="p-4 pb-1.5 space-y-1.5">
           <div className="flex items-start justify-between gap-1.5">
             <div className="flex items-center gap-2 min-w-0 flex-1">
+              {reorderable && (
+                <SortableItemHandle
+                  aria-label={m.notes_reorder_drag_handle()}
+                  className="h-6 w-6 shrink-0 rounded-md text-muted-foreground/60 opacity-0 transition-all duration-200 group-hover:opacity-100 pointer-coarse:opacity-100 hover:text-foreground hover:bg-muted/80"
+                >
+                  <GripVerticalIcon className="size-3.5" />
+                </SortableItemHandle>
+              )}
               <Checkbox
                 checked={isSelected}
                 onCheckedChange={() => onToggleSelect?.(note.id)}
@@ -225,6 +242,7 @@ export default memo(NoteCard, (prev, next) => {
   return (
     prev.isSelected === next.isSelected &&
     prev.viewMode === next.viewMode &&
+    prev.reorderable === next.reorderable &&
     prev.note.id === next.note.id &&
     prev.note.updatedAt === next.note.updatedAt &&
     prev.note.title === next.note.title &&

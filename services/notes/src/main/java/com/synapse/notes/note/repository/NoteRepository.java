@@ -132,4 +132,22 @@ public interface NoteRepository extends JpaRepository<Note, UUID> {
   List<UUID> findTrashedIdsByUserId(@Param("userId") String userId);
 
   List<Note> findAllByIdInAndUserId(Collection<UUID> ids, String userId);
+
+  @Query(
+      """
+      SELECT n FROM Note n
+      WHERE n.userId = :userId
+        AND n.id <> :id
+        AND n.trashed = false
+        AND n.content LIKE CONCAT('%', :escapedTitle, '%') ESCAPE '\\'
+      """)
+  List<Note> findBacklinks(
+      @Param("userId") String userId,
+      @Param("id") UUID id,
+      @Param("escapedTitle") String escapedTitle,
+      Pageable pageable);
+
+  @Modifying(clearAutomatically = true)
+  @Query(value = "DELETE FROM note_tags WHERE note_id IN :ids", nativeQuery = true)
+  void deleteTagsByNoteIds(@Param("ids") Collection<UUID> ids);
 }

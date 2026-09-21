@@ -3,6 +3,7 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import {
   pgTable,
   pgEnum,
+  primaryKey,
   text,
   timestamp,
   boolean,
@@ -103,6 +104,8 @@ export const notes = pgTable('notes', {
   userId: text('user_id').notNull(),
   id: uuid('id').primaryKey(),
   title: text('title'),
+  tags: text('tags').array(),
+  attachmentHash: text('attachment_hash'),
 });
 
 // ==================== Note Embeddings ====================
@@ -119,6 +122,19 @@ export const noteEmbeddings = pgTable(
     index('note_embeddings_embedding_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
     index('note_embeddings_user_id_idx').on(t.userId),
   ],
+);
+
+// ==================== Enrich Dismissals ====================
+
+export const enrichDismissals = pgTable(
+  'enrich_dismissals',
+  {
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    userId: text('user_id').notNull(),
+    noteId: uuid('note_id').notNull(),
+    kind: text('kind').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.noteId, t.kind] })],
 );
 
 // ==================== Relations ====================

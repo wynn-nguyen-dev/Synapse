@@ -27,6 +27,7 @@ export type ShortcutId =
   | 'editor-bold'
   | 'editor-code'
   | 'editor-link'
+  | 'enrich-note'
   | 'save-note';
 
 export interface KeyboardShortcutEntry {
@@ -89,6 +90,13 @@ export const KEYBOARD_SHORTCUTS: Record<ShortcutId, KeyboardShortcutEntry> = {
     label: () => m.keyboard_shortcuts_highlight(),
     combos: ['mod+shift+h'],
     id: 'editor-highlight',
+    section: 'editor',
+    group: 'text',
+  },
+  'enrich-note': {
+    label: () => m.keyboard_shortcuts_enrich_note(),
+    id: 'enrich-note',
+    combos: ['ctrl+space'],
     section: 'editor',
     group: 'text',
   },
