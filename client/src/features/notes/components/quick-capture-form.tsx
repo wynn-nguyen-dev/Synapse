@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 
 import { m } from '@/paraglide/messages';
 
+import { LexicalEditor } from '@/components/shared/editor';
+
 import { Field, FieldError } from '@/components/ui/field';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -50,7 +51,7 @@ export default function QuickCaptureForm({
   const { control } = form;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleTextareaKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
     if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
       onSave();
@@ -69,11 +70,13 @@ export default function QuickCaptureForm({
   };
 
   return (
+    // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Ctrl+Enter save lives on the form because the Lexical contentEditable traps Enter; all inner controls stay keyboard-accessible
     <form
       onSubmit={(event) => {
         event.preventDefault();
         onSave();
       }}
+      onKeyDown={handleFormKeyDown}
     >
       {attachments.files.length > 0 && (
         <span className="mb-2 flex flex-wrap gap-1.5">
@@ -101,25 +104,26 @@ export default function QuickCaptureForm({
         control={control}
         render={({ fieldState, field }) => (
           <Field data-invalid={fieldState.invalid}>
-            <Textarea
-              {...field}
-              autoFocus
-              rows={5}
-              disabled={isCreating}
-              placeholder={m.notes_page_create_content_placeholder()}
-              aria-invalid={fieldState.invalid}
-              onKeyDown={handleTextareaKeyDown}
-              onPaste={(event) => {
+            <div
+              onPasteCapture={(event) => {
                 const text = event.clipboardData.getData('text');
                 if (!shouldConvertPasteToFile(text)) return;
                 event.preventDefault();
+                event.stopPropagation();
                 attachments.onAttach([createPastedFile(text)]);
                 if (!field.value.trim()) {
                   field.onChange(extractLeadLine(text));
                 }
                 toast.success(m.notes_attachments_pasted_file());
               }}
-            />
+            >
+              <LexicalEditor
+                value={field.value}
+                onChange={field.onChange}
+                disabled={isCreating}
+                placeholder={m.notes_page_create_content_placeholder()}
+              />
+            </div>
 
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>

@@ -2,6 +2,22 @@
 
 ## Status
 
+### Fixed (quick-capture dialog back on Lexical — 2026-09-22)
+
+- [x] **Root cause** — `quick-capture-form.tsx` used a plain shadcn `Textarea` while the detail page uses the shared `LexicalEditor`; every note path should go through Lexical. Fix: swapped `Textarea` → `LexicalEditor` (same RHF `Controller` + `field.value`/`onChange`, same placeholder/disabled/validation), reusing the detail-page editor verbatim (toolbar, markdown shortcuts, autofocus included).
+- [x] **Behavior preserved** — Ctrl/Cmd+Enter save moved to a form-level `onKeyDown` (Lexical's contentEditable traps Enter, so the old textarea handler would never fire); long-paste-to-file kept via `onPasteCapture` wrapper (capture phase, `stopPropagation` so Lexical doesn't also insert the text) with the same lead-line fill + toast.
+- [x] **Verification** — `typecheck` ✓; `oxlint` ✓ clean (one `no-noninteractive-element-interactions` warn on the form handler, suppressed with reason comment following the palette precedent); `oxfmt` ✓. No `feature_list.json` change (bugfix, not a feature).
+- [ ] **Manual smoke pending (operator)** — open quick-capture, type rich text (bold/list/link) → save → detail shows the formatting; Ctrl+Enter saves from inside the editor; long paste still becomes a chip.
+- Not committed (user manages git).
+
+### Fixed (dev crash `import_os.platform is not a function` + duplicate React key — 2026-09-21)
+
+- [x] **Root cause** — `vite.config.ts` `resolve.conditions: ['source']` (added in 0b5f13e) replaced Vite's default conditions, dropping `browser`. `@vercel/oidc` (pulled in via `ai` → `@ai-sdk/gateway`, runtime import `DefaultChatTransport` in `companion-chat-transport.ts`) then resolved to its Node entry, whose top-level `os.platform()` throws in the browser inside the lazy chat route (`<Lazy>` crash). Fix: removed the `conditions` line (1-line diff, restores Vite defaults).
+- [x] **Duplicate key** — `StackTraceFrames` used `key={frame.raw}`; identical stack lines (e.g. repeated `rolldown-runtime` frames) produced React's "two children with the same key" warning. Fix: `key={`${frame.raw}-${index}`}`.
+- [x] **Verification** — fresh dev dep-optimization bundle now resolves oidc's browser stub (`getVercelToken is not supported in browser environments`, zero `platform` refs) vs old bundle's top-level `import_os.platform()`; `bun run build` ✓ 34.8s; `typecheck` ✓; `lint` ✓ 0 errors/warnings.
+- [ ] **Operator steps** — restart the dev server on :5173 (it still runs the old config in memory); hard-reload once to drop the stale `.vite/deps` chunk. No `feature_list.json` change (bugfix, not a feature).
+- Not committed (user manages git).
+
 ### What's Done (demo-loop Phase 8 — manual reorder — 2026-09-21, plan complete)
 
 - [x] **Drag-to-reorder** on the active view (default sort only): hover-reveal grip in each card header (always visible on touch), handle-only dragging (card clicks/dropdowns/long-press unaffected), grid wrapped in Sortable (mixed orientation, no axis lock) with default drop feedback.

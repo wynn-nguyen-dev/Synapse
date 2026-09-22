@@ -223,6 +223,7 @@ export const StackTraceHeader = memo(
       <Collapsible onOpenChange={setIsOpen} open={isOpen}>
         <CollapsibleTrigger
           {...props}
+          nativeButton={false}
           render={
             <div
               className={cn(
@@ -487,7 +488,7 @@ export const StackTraceFrames = memo(
 
     return (
       <div className={cn('space-y-1 p-3', className)} {...props}>
-        {framesToShow.map((frame) => (
+        {framesToShow.map((frame, index) => (
           <div
             className={cn(
               'text-xs',
@@ -495,7 +496,7 @@ export const StackTraceFrames = memo(
                 ? 'text-muted-foreground/50'
                 : 'text-foreground/90',
             )}
-            key={frame.raw}
+            key={`${frame.raw}-${index}`}
           >
             <span className="text-muted-foreground">at </span>
             {frame.functionName && (

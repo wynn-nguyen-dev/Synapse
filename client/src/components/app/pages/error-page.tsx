@@ -6,10 +6,15 @@ import { m } from '@/paraglide/messages';
 
 import {
   StackTrace,
+  StackTraceActions,
+  StackTraceContent,
+  StackTraceCopyButton,
   StackTraceError,
   StackTraceErrorMessage,
   StackTraceErrorType,
+  StackTraceExpandButton,
   StackTraceFrames,
+  StackTraceHeader,
 } from '@/components/ai-elements/stack-trace';
 
 import { Button } from '@/components/ui/button';
@@ -184,12 +189,21 @@ export default function ErrorPage({
           <div className="w-full pt-2 text-left">
             <StackTrace
               trace={error.stack ?? `${error.name || 'Error'}: ${error.message || String(error)}`}
+              defaultOpen
             >
-              <StackTraceError>
-                <StackTraceErrorType />
-                <StackTraceErrorMessage />
-              </StackTraceError>
-              <StackTraceFrames />
+              <StackTraceHeader>
+                <StackTraceError>
+                  <StackTraceErrorType />
+                  <StackTraceErrorMessage />
+                </StackTraceError>
+                <StackTraceActions>
+                  <StackTraceCopyButton />
+                  <StackTraceExpandButton />
+                </StackTraceActions>
+              </StackTraceHeader>
+              <StackTraceContent>
+                <StackTraceFrames />
+              </StackTraceContent>
             </StackTrace>
           </div>
         )}
